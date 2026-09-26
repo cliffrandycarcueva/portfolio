@@ -129,14 +129,14 @@ function App() {
         >
           <div className="hero-copy">
             <div className="eyebrow flex items-center gap-[9px] text-[9px] font-[650] tracking-[1.2px] text-accent max-tablet:text-[8px] max-tablet:tracking-[.5px] max-mobile:text-[8px] max-mobile:tracking-[1px]">
-              <span className="status-dot inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#73945e] dark:bg-[#8cb4eb]" />{' '}
+              <span className="status-dot inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#6a91bf] dark:bg-[#8cb4eb]" />{' '}
               FULL STACK DEVELOPER{' '}
-              <span className="eyebrow-divider px-1 py-0 text-[#b9c0b3]">/</span> DAVAO, PH
+              <span className="eyebrow-divider px-1 py-0 text-[#adbed3]">/</span> DAVAO, PH
             </div>
             <h1>
               Cliff Randy
               <br />
-              Carcueva<span className="name-dot text-[#769064] dark:text-[#93b5e8]">.</span>
+              Carcueva<span className="name-dot text-[#688bb8] dark:text-[#93b5e8]">.</span>
             </h1>
             <p className="hero-tagline text-[23px] leading-[1.45] font-medium tracking-[-.6px] max-mobile:text-[22px]">
               Thoughtful code.
@@ -149,7 +149,7 @@ function App() {
             </p>
             <div className="hero-buttons mt-[27px] flex gap-[11px] max-mobile:gap-[9px]">
               <a
-                className="button primary inline-flex items-center justify-center gap-3.5 rounded-md border border-[#284b37] bg-[#284b37] px-4.5 py-[13px] text-[12px] font-medium text-white transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_#0000000c] max-mobile:px-3.5 max-mobile:py-3 max-mobile:text-[11px] dark:border-[#315d98] dark:bg-[#315d98]"
+                className="button primary inline-flex items-center justify-center gap-3.5 rounded-md border border-[#315d98] bg-[#315d98] px-4.5 py-[13px] text-[12px] font-medium text-white transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_#0000000c] max-mobile:px-3.5 max-mobile:py-3 max-mobile:text-[11px] dark:border-[#315d98] dark:bg-[#315d98]"
                 href="#experience"
               >
                 Explore my experience <ArrowDown size={16} />
@@ -182,10 +182,10 @@ function App() {
           >
             <div className="art-grid max-mobile:inset-x-0" />
             <div className="floating-label absolute top-[3px] right-1.5 z-[2] flex rotate-3 items-center gap-2 rounded-md border border-line bg-surface px-3.5 py-[11px] text-[10px] shadow-[0_4px_15px_#00000005] max-tablet:text-[8px] max-mobile:right-0 max-mobile:text-[9px]">
-              <span className="status-dot inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#73945e] dark:bg-[#8cb4eb]" />{' '}
+              <span className="status-dot inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#6a91bf] dark:bg-[#8cb4eb]" />{' '}
               From frontend to backend
             </div>
-            <div className="code-card relative w-full max-w-[410px] -rotate-2 rounded-[10px] border border-line bg-surface shadow-[0_17px_36px_-18px_#2b3c3033] max-mobile:w-[94%] max-mobile:max-w-[370px] wide:max-w-[440px]">
+            <div className="code-card relative w-full max-w-[410px] -rotate-2 rounded-[10px] border border-line bg-surface shadow-[0_17px_36px_-18px_#263f6033] max-mobile:w-[94%] max-mobile:max-w-[370px] wide:max-w-[440px]">
               <div className="code-toolbar flex h-10.5 items-center justify-between border-b border-line px-[15px] py-0 font-mono text-[10px] text-muted">
                 <div>
                   <i />
@@ -227,7 +227,7 @@ function App() {
               </div>
               <div className="code-footer flex justify-between border-t border-line px-[15px] py-[11px] text-[9px] text-muted">
                 <span>
-                  <span className="status-dot inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#73945e] dark:bg-[#8cb4eb]" />{' '}
+                  <span className="status-dot inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#6a91bf] dark:bg-[#8cb4eb]" />{' '}
                   Crafting better software
                 </span>
                 <span>TypeScript</span>
@@ -282,7 +282,7 @@ function App() {
               with AI-assisted tools as part of my development workflow.
             </p>
             <div className="inline-note mt-6 flex flex-wrap items-center gap-1.5 text-[10px] text-muted max-mobile:text-[9px] max-mobile:leading-[1.8]">
-              <span className="status-dot inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#73945e] dark:bg-[#8cb4eb]" />{' '}
+              <span className="status-dot inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#6a91bf] dark:bg-[#8cb4eb]" />{' '}
               Currently Senior Full Stack Developer at <strong>Jairosoft Inc.</strong>
             </div>
           </div>
@@ -318,10 +318,10 @@ function App() {
               const open = expanded.includes(experience.id);
               return (
                 <article
-                  className={`experience-item group relative mb-[11px] rounded-lg border border-line bg-surface transition-colors duration-200 hover:border-[#adbaa4] dark:hover:border-[#6485b1] [&.is-open]:border-[#bdcbb5] dark:[&.is-open]:border-[#536f96] ${open ? 'is-open' : ''}`}
+                  className={`experience-item group relative mb-[11px] rounded-lg border border-line bg-surface transition-colors duration-200 hover:border-[#9cb5d5] dark:hover:border-[#6485b1] [&.is-open]:border-[#b1c6e0] dark:[&.is-open]:border-[#536f96] ${open ? 'is-open' : ''}`}
                   key={experience.id}
                 >
-                  <div className="timeline-dot absolute top-[37px] left-[-30px] h-[7px] w-[7px] rounded-full border border-[#a8b39f] bg-canvas group-[.is-open]:bg-[#769165] group-[.is-open]:shadow-[0_0_0_4px_var(--bg)] max-mobile:top-[31px] max-mobile:left-[-20px] dark:border-[#6d8bb4] dark:group-[.is-open]:bg-[#8cb4eb]" />
+                  <div className="timeline-dot absolute top-[37px] left-[-30px] h-[7px] w-[7px] rounded-full border border-[#9aafca] bg-canvas group-[.is-open]:bg-[#7095c4] group-[.is-open]:shadow-[0_0_0_4px_var(--bg)] max-mobile:top-[31px] max-mobile:left-[-20px] dark:border-[#6d8bb4] dark:group-[.is-open]:bg-[#8cb4eb]" />
                   <button
                     id={`trigger-${experience.id}`}
                     className="experience-trigger flex w-full items-center gap-4 p-[21px] text-left max-mobile:relative max-mobile:flex-wrap max-mobile:gap-2.5 max-mobile:px-3 max-mobile:py-4"
@@ -455,7 +455,7 @@ function App() {
                   .find((g) => g.name === category)!
                   .skills.map((skill) => (
                     <span key={skill}>
-                      <span className="chip-dot h-1 w-1 rounded-full bg-[#8ca579] dark:bg-[#8cb4eb]" />
+                      <span className="chip-dot h-1 w-1 rounded-full bg-[#779bc7] dark:bg-[#8cb4eb]" />
                       {skill}
                     </span>
                   ))}
@@ -524,7 +524,7 @@ function App() {
           </p>
           <div className="contact-actions mt-6 flex justify-center gap-2.5">
             <a
-              className="button primary inline-flex items-center justify-center gap-3.5 rounded-md border border-[#284b37] bg-[#284b37] px-4.5 py-[13px] text-[12px] font-medium text-white transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_#0000000c] max-mobile:px-3.5 max-mobile:py-3 max-mobile:text-[11px] dark:border-[#315d98] dark:bg-[#315d98]"
+              className="button primary inline-flex items-center justify-center gap-3.5 rounded-md border border-[#315d98] bg-[#315d98] px-4.5 py-[13px] text-[12px] font-medium text-white transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_#0000000c] max-mobile:px-3.5 max-mobile:py-3 max-mobile:text-[11px] dark:border-[#315d98] dark:bg-[#315d98]"
               href={`mailto:${profile.email}`}
             >
               Say hello <ArrowUpRight size={17} />

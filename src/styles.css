@@ -36,15 +36,15 @@
 
 /* Semantic theme tokens power the utilities in both themes. */
 :root {
-  --bg: #f8f9f6;
+  --bg: #f5f8fc;
   --surface: #fff;
-  --text: #292d29;
-  --muted: #777c75;
-  --line: #e3e6de;
-  --accent: #3a6046;
-  --soft: #eef2e9;
-  --green: #476b43;
-  --focus: #86a870;
+  --text: #243247;
+  --muted: #62748c;
+  --line: #dce5f0;
+  --accent: #365f94;
+  --soft: #eaf1fa;
+  --green: #416fa5;
+  --focus: #648ec4;
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
@@ -83,8 +83,8 @@
     outline-offset: 5px;
   }
   ::selection {
-    background: #dce8cb;
-    color: #203b2a;
+    background: #d9e8fb;
+    color: #203d63;
   }
   h1,
   h2,
@@ -222,7 +222,7 @@
     @apply mb-[7px] pl-1 text-[11px] leading-[1.85] text-muted;
   }
   .experience-details li::marker {
-    @apply text-[#8b9c7b];
+    @apply text-[#6f8fb6];
   }
   .journey-start span {
     @apply ml-2.5;
@@ -260,7 +260,7 @@
     position: absolute;
     width: 230px;
     height: 230px;
-    border: 1px solid #82987120;
+    border: 1px solid #668ab320;
     border-radius: 50%;
     pointer-events: none;
     left: -115px;
@@ -277,7 +277,7 @@
     @apply text-[39px] leading-[1.25] tracking-[-1.6px];
   }
   .contact h2 span {
-    @apply text-[#789765] dark:text-[#93b5e8];
+    @apply text-[#688bb8] dark:text-[#93b5e8];
   }
   .contact > p {
     @apply mt-[17px] text-[12px] leading-[1.85] text-muted;

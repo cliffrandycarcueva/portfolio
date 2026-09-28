@@ -1,13 +1,48 @@
+export interface Experience {
+  id: string;
+  company: string;
+  role: string;
+  start: string;
+  end: string;
+  current?: boolean;
+  monogram: string;
+  color: 'green' | 'yellow' | 'purple' | 'blue' | 'peach' | 'gray';
+  tags: string[];
+  bullets: string[];
+}
+export interface SkillGroup {
+  name: string;
+  skills: string[];
+}
+export interface ContactLink {
+  id: 'github' | 'linkedin' | 'email' | 'phone';
+  label: string;
+  href: string;
+  external: boolean;
+  accessibleLabel: string;
+}
 export const profile = {
   name: 'Cliff Randy D. Carcueva',
+  givenName: 'Cliff Randy',
+  familyName: 'Carcueva',
+  shortName: 'Cliff Carcueva',
+  brand: 'crc',
+  role: 'Full Stack Developer',
+  location: { short: 'Davao, PH', full: 'Davao City, Philippines' },
+  resumeUrl: '/Cliff_Randy_Carcueva_Resume.pdf',
+  careerStartYear: 2011,
+  yearsExperience: 15,
+  featuredStack: ['React', 'Next.js', 'TypeScript', 'Node.js'],
+  mindset: 'Always learning',
   email: 'cliffrandycarcueva@gmail.com',
   phone: '+63 999 995 2843',
   github: 'https://github.com/cliffrandycarcueva',
   linkedin: 'https://linkedin.com/in/cliff-randy-carcueva-9b556975/',
 };
-export const experiences = [
+export const experiences: Experience[] = [
   {
     id: 'jairosoft-senior',
+    current: true,
     company: 'Jairosoft Inc.',
     role: 'Senior Full Stack Developer',
     start: 'Jun 2024',
@@ -123,7 +158,7 @@ export const experiences = [
     ],
   },
 ];
-export const skillGroups = [
+export const skillGroups: SkillGroup[] = [
   {
     name: 'Frontend',
     skills: [
@@ -192,4 +227,69 @@ export const skillGroups = [
       'Azure DevOps — Deployments & Pipelines (Minimal knowledge)',
     ],
   },
+];
+
+export const navigation = [
+  { id: 'about', label: 'about' },
+  { id: 'experience', label: 'experience' },
+  { id: 'skills', label: 'skills' },
+  { id: 'contact', label: 'contact' },
+] as const;
+export const contactLinks = {
+  github: {
+    id: 'github',
+    label: 'GitHub',
+    href: profile.github,
+    external: true,
+    accessibleLabel: 'GitHub',
+  },
+  linkedin: {
+    id: 'linkedin',
+    label: 'LinkedIn',
+    href: profile.linkedin,
+    external: true,
+    accessibleLabel: 'LinkedIn',
+  },
+  email: {
+    id: 'email',
+    label: 'Email',
+    href: `mailto:${profile.email}`,
+    external: false,
+    accessibleLabel: `Email ${profile.shortName}`,
+  },
+  phone: {
+    id: 'phone',
+    label: 'Call',
+    href: `tel:${profile.phone.replace(/\s/g, '')}`,
+    external: false,
+    accessibleLabel: `Call ${profile.phone}`,
+  },
+} satisfies Record<ContactLink['id'], ContactLink>;
+export const socialLinks = {
+  icons: [contactLinks.github, contactLinks.linkedin, contactLinks.email],
+  text: [contactLinks.github, contactLinks.linkedin, contactLinks.phone],
+};
+export const about = {
+  tagline: ['Thoughtful code.', 'Reliable experiences.'],
+  description: `I build enterprise web applications from interface to infrastructure. ${profile.yearsExperience}+ years of turning complex requirements into software that works.`,
+  heading: ['Built on experience.', 'Focused on what\u2019s next.'],
+  paragraphs: [
+    'I\u2019m a Senior Full Stack Developer with experience building and maintaining enterprise web applications for local and international clients. My work spans frontend architecture, REST APIs, database design, and performance optimization.',
+    'Beyond writing code, I enjoy helping teams grow through code reviews and technical mentoring. I bring a hands-on approach to production support and Agile collaboration, with AI-assisted tools as part of my development workflow.',
+  ],
+};
+export const statistics = [
+  { value: profile.yearsExperience, suffix: '+', label: 'Years in development' },
+  { value: experiences.length, label: 'Roles along the way' },
+  { value: 'Full stack', label: 'Frontend to database' },
+  { value: profile.mindset, suffix: '\u2197', label: 'Engineering with curiosity' },
+];
+export const education = {
+  degree: 'BS in Information Technology',
+  school: 'STI College Davao',
+  year: 2011,
+};
+export const languages = [
+  { name: 'English', proficiency: 'Professional working proficiency' },
+  { name: 'Filipino', proficiency: 'Native' },
 ];

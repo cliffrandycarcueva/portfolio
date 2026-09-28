@@ -1,4 +1,48 @@
 import { test, expect } from '@playwright/test';
+import { profile } from '../src/data';
+
+test('shared contact links and clipboard feedback work across sections', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          window.sessionStorage.setItem('copied-email', text);
+        },
+      },
+    });
+  });
+  await page.goto('/');
+  for (const name of ['GitHub', 'LinkedIn'] as const) {
+    const links = page.getByRole('link', { name, exact: true });
+    await expect(links).toHaveCount(2);
+    for (const link of await links.all()) {
+      await expect(link).toHaveAttribute(
+        'href',
+        name === 'GitHub' ? profile.github : profile.linkedin,
+      );
+      await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    }
+  }
+  await expect(page.locator('.contact-email')).toHaveAttribute('href', `mailto:${profile.email}`);
+  await page.getByRole('button', { name: 'Copy email', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Email address copied to clipboard.');
+  expect(await page.evaluate(() => sessionStorage.getItem('copied-email'))).toBe(profile.email);
+  await expect(page.getByRole('button', { name: 'Copy email', exact: true })).toBeVisible();
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: async () => {
+          throw new Error('Clipboard unavailable');
+        },
+      },
+    });
+  });
+  await page.getByRole('button', { name: 'Copy email', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText(
+    'Please select and copy the email address above.',
+  );
+});
 
 test('experience accordion preserves resume content and supports bulk controls', async ({
   page,

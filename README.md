@@ -26,8 +26,8 @@ Open the preview URL printed in the terminal, normally **http://localhost:4173**
 
 ## Customize
 
-- Edit `src/data.ts` for contact information, experience responsibilities, and skills.
-- Edit `src/main.tsx` for introduction, education, languages, and Tailwind utilities controlling layout, spacing, and responsive behavior.
+- Edit `src/data.ts` for profile details, social/contact URLs, navigation, introductory copy, experience responsibilities, skills, education, and languages. Social links and email/phone protocols are shared across the page; statistics derive their role count from the experience collection.
+- Edit `src/components/` for section markup and Tailwind utilities. `src/App.tsx` composes the page; `src/main.tsx` only mounts React.
 - Edit `src/styles.css` for theme colors, fonts, breakpoints, shared typography, decorative effects, and print styles.
 - Replace `public/Cliff_Randy_Carcueva_Resume.pdf` to update the downloadable resume.
 - Update `index.html` for the page title and search description.

@@ -10,8 +10,12 @@ public/
   favicon.svg               Original typographic favicon
   Cliff_Randy_Carcueva_Resume.pdf
 src/
-  main.tsx                  React entry, portfolio sections, Tailwind utilities
-  data.ts                   Typed-by-inference content collections
+  main.tsx                  React entry point
+  App.tsx                   Page composition and skip link
+  components/               Header, Footer, Hero, About, Experience, Skills,
+                            Education, Contact, Stats, DeveloperIllustration, SocialLinks
+  hooks/                    Theme persistence and active-section observation
+  data.ts                   Typed content, navigation, and shared contact links
   styles.css                Tailwind theme, shared styles, effects, print rules
 vite.config.ts              React and Tailwind Vite plugins
 .prettierrc.json             Formatting and Tailwind class sorting
@@ -21,15 +25,16 @@ tests/portfolio.spec.ts     Interaction and mobile checks
 
 ## Rendering and data flow
 
-`main.tsx` mounts `App` inside React Strict Mode. `App` imports structured resume content from `data.ts`, then renders the introduction, overview, experience timeline, skills, education/languages, and contact sections. Arrays drive experience cards and skill categories, keeping repeated markup consistent. The stylized code illustration is HTML/CSS, not a screenshot, and needs no image downloads. Lucide supplies interface icons; company tiles are typographic initials rather than official logos.
+`main.tsx` mounts `App` inside React Strict Mode. `App` only composes the page. Each section imports its content from `data.ts`, and owns the state needed for its interactions. No global state store or context is needed for this single-page site.
 
-Local React state handles interactions:
+- `Header` uses `useTheme` for persisted theme selection and `useActiveSection` for navigation highlighting. The observer subscribes to sections from the navigation collection and disconnects on unmount.
+- `Experience` owns expanded entry IDs. Roles marked `current: true` start expanded and display the current badge; this does not depend on array position. Complete utility strings are checked against the experience color union.
+- `Skills` owns the selected category and preserves tab keyboard controls.
+- `Contact` owns clipboard success/error feedback and cleans up the reset timer. The visible email remains available when clipboard access fails.
+- `SocialLinks` renders icon and text variants from shared link collections. Contact destinations are derived once from `profile`; external links receive new-tab attributes while email and phone use native protocols.
+- `Hero`, `About`, `Stats`, `Education`, `Footer`, and `DeveloperIllustration` render profile/content data. The role count derives from `experiences.length`; years of experience remain an explicit owner-maintained value rather than making assumptions about career continuity.
 
-- `expanded`: IDs of open experience entries. The current role starts expanded. Every entry can open independently, and the bulk control opens or closes all entries.
-- `category`: the selected skill group. The panel reads the corresponding content collection.
-- `dark`: theme selection, persisted in `localStorage` when available. CSS custom properties apply the theme through the root `data-theme` attribute.
-- `active`: navigation section, updated by an `IntersectionObserver`.
-- `copied` and `copyError`: clipboard feedback. The success timer is cleaned up on state changes/unmount. If clipboard access fails, the visible email remains available for manual copying.
+Content types live alongside data, while React icons and style maps stay in components. The code illustration is HTML/CSS and requires no image downloads. Lucide supplies interface icons; company tiles are typographic initials rather than official logos.
 
 There are no remote content requests, cookies, analytics, API credentials, or server processes. Google Fonts is an optional external stylesheet request. The resume is a static asset copied unchanged from the supplied PDF. External GitHub and LinkedIn links open a new tab with `rel="noreferrer"`; email and phone links use native protocols.
 

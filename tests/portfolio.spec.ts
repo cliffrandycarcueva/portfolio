@@ -12,7 +12,7 @@ test('shared contact links and clipboard feedback work across sections', async (
       },
     });
   });
-  await page.goto('/');
+  await page.goto('./');
   for (const name of ['GitHub', 'LinkedIn'] as const) {
     const links = page.getByRole('link', { name, exact: true });
     await expect(links).toHaveCount(2);
@@ -47,11 +47,14 @@ test('shared contact links and clipboard feedback work across sections', async (
 test('experience accordion preserves resume content and supports bulk controls', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('./');
   const current = page.locator('#trigger-jairosoft-senior');
   await expect(current).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('#panel-jairosoft-senior li')).toHaveCount(10);
-  await page.screenshot({ path: 'test-results/desktop.png', fullPage: true });
+  await page.screenshot({
+    path: `test-results/${test.info().project.name}-desktop.png`,
+    fullPage: true,
+  });
   await current.click();
   await expect(page.locator('#panel-jairosoft-senior')).toBeHidden();
   await current.focus();
@@ -66,7 +69,7 @@ test('experience accordion preserves resume content and supports bulk controls',
 test('skill tabs, theme persistence, resume, and browser errors', async ({ page, request }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('tab', { name: 'Backend' }).click();
   await expect(page.getByRole('tabpanel')).toContainText('NestJS');
   await expect(page.getByRole('tabpanel')).toContainText('PHP (Minimal knowledge)');
@@ -96,7 +99,7 @@ test('skill tabs, theme persistence, resume, and browser errors', async ({ page,
 test('responsive Tailwind layouts, reduced motion, and printed responsibilities', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('./');
   for (const width of [320, 640, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.getByRole('tab', { name: 'Engineering' }).click();
@@ -121,11 +124,14 @@ test('responsive Tailwind layouts, reduced motion, and printed responsibilities'
 
 test('mobile fits viewport and experience details remain usable', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto('/');
+  await page.goto('./');
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
   ).toBeTruthy();
   await page.locator('#trigger-lemontech').click();
   await expect(page.locator('#panel-lemontech')).toBeVisible();
-  await page.screenshot({ path: 'test-results/mobile.png', fullPage: true });
+  await page.screenshot({
+    path: `test-results/${test.info().project.name}-mobile.png`,
+    fullPage: true,
+  });
 });

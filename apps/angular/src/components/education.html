@@ -1,0 +1,39 @@
+<section class="education section-block pt-[65px] max-mobile:pt-11">
+  <div>
+    <div
+      class="section-kicker mb-4 text-[10px] font-[650] tracking-[1.7px] text-muted max-mobile:text-[9px] max-mobile:tracking-[1.5px]"
+    >
+      04 / THE FOUNDATION
+    </div>
+    <h2>Learning & language<span class="heading-dot text-leaf">.</span></h2>
+  </div>
+  <div
+    class="education-grid mt-6 grid grid-cols-[1.2fr_1fr] gap-5 max-mobile:grid-cols-[1fr] max-mobile:gap-[13px]"
+  >
+    <div
+      class="education-card flex items-center gap-4.5 rounded-lg border border-line bg-surface p-6.5 max-tablet:p-5"
+    >
+      <div
+        class="education-icon rounded-lg bg-soft p-3.5 text-accent max-tablet:hidden max-mobile:block max-mobile:p-3"
+      >
+        <portfolio-icon name="GraduationCap" [size]="23"></portfolio-icon>
+      </div>
+      <div>
+        <span class="small-label text-[8px] font-[650] tracking-[1.2px] text-muted"
+          >EDUCATION
+        </span>
+        <h3>{{ education.degree }}</h3>
+        <p>{{ education.school }} <span>·</span> {{ education.year }}</p>
+      </div>
+    </div>
+    <div class="language-card rounded-lg border border-line bg-surface p-6.5 max-tablet:p-5">
+      <span class="small-label text-[8px] font-[650] tracking-[1.2px] text-muted">LANGUAGES </span>
+      @for (language of languages; track language.name) {
+        <div>
+          <strong>{{ language.name }}</strong
+          ><span>{{ language.proficiency }}</span>
+        </div>
+      }
+    </div>
+  </div>
+</section>

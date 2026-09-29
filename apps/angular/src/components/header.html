@@ -1,0 +1,41 @@
+<header class="header sticky top-0 z-[20] border-b border-line bg-canvas">
+  <div
+    class="header-inner m-auto flex h-20.5 max-w-[1120px] items-center justify-between px-9.5 py-0 max-tablet:pr-[25px] max-tablet:pl-[25px] max-mobile:h-17 max-mobile:px-[19px] max-mobile:py-0 wide:max-w-[1200px]"
+  >
+    <a
+      href="#about"
+      class="brand font-heading text-[31px] font-extrabold tracking-[-2px] max-mobile:text-[27px]"
+      [attr.aria-label]="profile.name + ' home'"
+      >{{ profile.brand }}<span>.</span></a
+    >
+    <nav class="max-[360px]:gap-2.5" aria-label="Main navigation">
+      @for (item of navigation; track item.id) {
+        <a
+          [href]="'#' + item.id"
+          [attr.aria-current]="active() === item.id ? 'location' : null"
+          [class]="active() === item.id ? 'active' : ''"
+          >{{ item.label }}</a
+        >
+      }
+    </nav>
+    <div class="header-actions flex items-center gap-4.5 max-mobile:gap-[3px]">
+      <button
+        class="icon-button theme grid place-items-center p-2"
+        (click)="theme.toggle()"
+        [attr.aria-label]="'Switch to ' + (theme.dark() ? 'light' : 'dark') + ' theme'"
+      >
+        @if (theme.dark()) {
+          <portfolio-icon name="Sun" [size]="18"></portfolio-icon>
+        } @else {
+          <portfolio-icon name="Moon" [size]="18"></portfolio-icon>
+        }</button
+      ><portfolio-framework-switch></portfolio-framework-switch
+      ><a
+        [href]="profile.resumeUrl"
+        download
+        class="resume-link flex items-center gap-2 rounded-md border border-line bg-surface px-3.5 py-2.5 text-[12px] font-semibold max-mobile:border-0 max-mobile:bg-transparent max-mobile:p-2"
+        ><portfolio-icon name="Download" [size]="15"></portfolio-icon><span>Resume</span></a
+      >
+    </div>
+  </div>
+</header>

@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "cli": { "analytics": false },
+  "projects": {
+    "portfolio-angular": {
+      "projectType": "application",
+      "root": "apps/angular",
+      "sourceRoot": "apps/angular/src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "apps/angular/src/main.ts",
+            "index": "apps/angular/src/index.html",
+            "tsConfig": "apps/angular/tsconfig.app.json",
+            "styles": ["apps/angular/src/styles.css"],
+            "baseHref": "/angular/",
+            "outputPath": { "base": "dist/angular", "browser": "" }
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "all",
+              "optimization": { "scripts": true, "styles": true, "fonts": false },
+              "budgets": [{ "type": "initial", "maximumWarning": "600kB", "maximumError": "1MB" }]
+            },
+            "development": { "optimization": false, "sourceMap": true }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "portfolio-angular:build:development",
+            "port": 4201,
+            "host": "127.0.0.1",
+            "servePath": "/angular/"
+          }
+        }
+      }
+    }
+  }
+}

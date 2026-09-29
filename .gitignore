@@ -4,3 +4,4 @@ test-results/
 playwright-report/
 *.tsbuildinfo
 resume-preview.png
+.angular/

@@ -1,6 +1,6 @@
 # Cliff Carcueva — Personal Portfolio
 
-A responsive React + TypeScript + **Tailwind CSS v4** portfolio based on Cliff Randy D. Carcueva’s resume. Includes seven expandable experience entries with the original responsibilities, skill category tabs, a persistent light/dark theme, email copying, social links, and the downloadable resume.
+A responsive **React + Angular** portfolio using TypeScript and Tailwind CSS v4. Both implementations have separate components and share portfolio data, design styles, and public assets.
 
 ## Run locally
 
@@ -11,7 +11,9 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite, normally **http://localhost:5173**. Keep the terminal running. Stop it with `Ctrl+C`.
+Open **http://localhost:5173/react/** or **http://localhost:5173/angular/**. The root redirects to React. The switch beside the theme button navigates between the implementations, preserving the theme and current section.
+
+`npm run dev` starts Vite on port 5173 and Angular on internal port 4201. Vite proxies `/angular/` so both apps use the same origin. React supports hot updates; Angular rebuilds on edits and can be refreshed in the browser. Keep the terminal running; `Ctrl+C` stops both servers.
 
 On Windows, if PowerShell blocks `npm.ps1`, use `npm.cmd install` and `npm.cmd run dev` instead.
 
@@ -22,21 +24,25 @@ npm run build
 npm run preview
 ```
 
-Open the preview URL printed in the terminal, normally **http://localhost:4173**. The production files are in `dist/`; deploy that folder to a static host. No server, database, environment variables, or API keys are needed. The default configuration assumes deployment at the domain root; subdirectory deployments require a matching Vite `base` and asset URLs.
+Open **http://localhost:4173/react/** or **http://localhost:4173/angular/**. The production files are in `dist/`; deploy that folder to a static host. Both applications run on the same domain, with no subdomains or backend required.
+
+For Vercel, import the repository at root `./` with framework preset **Other**. `vercel.json` specifies `npm run build`, output directory `dist`, and the root redirect. Other hosts must serve directory index files and redirect `/` to `/react/`. Do not add a global rewrite to the React entry: it would intercept Angular requests.
+
+`npm run build:react` and `npm run build:angular` build each app independently. The combined build cleans `dist`, runs both compilers, and copies the shared public assets.
 
 ## Customize
 
-- Edit `src/data.ts` for profile details, social/contact URLs, navigation, introductory copy, experience responsibilities, skills, education, and languages. Social links and email/phone protocols are shared across the page; statistics derive their role count from the experience collection.
-- Edit `src/components/` for section markup and Tailwind utilities. `src/App.tsx` composes the page; `src/main.tsx` only mounts React.
-- Edit `src/styles.css` for theme colors, fonts, breakpoints, shared typography, decorative effects, and print styles.
+- Edit `shared/data.ts` for profile details, links, introductory copy, experience, skills, education, and languages. Both applications consume it; `src/data.ts` preserves existing React imports through a re-export.
+- Edit `src/components/` for React components and `apps/angular/src/components/` for Angular components and templates. Each app has its own entry point and page composition.
+- Edit `shared/styles.css` for theme colors, fonts, breakpoints, shared typography, decorative effects, and print styles.
 - Replace `public/Cliff_Randy_Carcueva_Resume.pdf` to update the downloadable resume.
-- Update `index.html` for the page title and search description.
+- Update `index.html` and `apps/angular/src/index.html` for page titles and search descriptions.
 
 The PDF and contact details are public website assets. Experience text is transcribed from the supplied resume; introductory copy is adapted from its summary. Skills also include owner-requested additions: PHP and Laravel with minimal knowledge, and Azure DevOps deployments/pipelines with minimal knowledge. No client projects or performance metrics have been invented. Google Fonts enhances typography when online; system fonts serve as fallbacks.
 
 ## Tailwind styling
 
-Tailwind v4 runs through the official `@tailwindcss/vite` plugin. It is compiled locally during development and into static CSS during production builds; no Tailwind CDN or extra deployment configuration is required. The CSS-first setup lives in `src/styles.css`, so there is no `tailwind.config.js`.
+Tailwind v4 uses `@tailwindcss/vite` for React and `@tailwindcss/postcss` for Angular. Both compile `shared/styles.css` with source scanning for both applications. No Tailwind CDN or JavaScript Tailwind configuration is required.
 
 - Semantic utilities such as `bg-surface`, `text-muted`, and `border-line` share light/dark theme tokens.
 - Responsive utilities such as `max-mobile:grid-cols-[1fr]` preserve the original layout at narrow widths. The custom breakpoints are `mobile` (640px), `tablet` (850px), and `wide` (1400px).
@@ -55,7 +61,7 @@ npx playwright install chromium
 npm test
 ```
 
-Tests start a local Vite server automatically and cover individual and bulk accordion controls, keyboard navigation, skill categories, theme persistence, the PDF link, responsive layouts, reduced motion, and print visibility.
+Tests start both apps automatically and run the same checks against React and Angular. They cover framework switching, direct routes, public assets, accordion controls, keyboard navigation, skill categories, theme persistence, clipboard feedback, the PDF link, responsive layouts, reduced motion, and print visibility.
 
 If the browser download is unavailable and Chrome is already installed, run the checks in PowerShell with:
 
@@ -64,6 +70,6 @@ $env:PLAYWRIGHT_CHANNEL = 'chrome'
 npm.cmd test
 ```
 
-The browser tests support installed Chrome through the command above; this avoids downloading a separate Chromium build when the download service is unavailable.
+To test production outputs after `npm run build`, set `$env:TEST_PRODUCTION = '1'` before `npm test`. This starts the shared preview server on port 4173. Remove that environment variable to return to development tests.
 
 Read [ARCHITECTURE.md](./ARCHITECTURE.md) for the project structure and implementation decisions.

@@ -2,6 +2,7 @@ import { Download, Moon, Sun } from 'lucide-react';
 import { navigation, profile } from '../data';
 import { useTheme } from '../hooks/useTheme';
 import { useActiveSection } from '../hooks/useActiveSection';
+import { FrameworkSwitch } from './FrameworkSwitch';
 export function Header() {
   const { dark, toggleTheme } = useTheme();
   const active = useActiveSection();
@@ -36,6 +37,7 @@ export function Header() {
           >
             {dark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
+          <FrameworkSwitch />
           <a
             href={profile.resumeUrl}
             download

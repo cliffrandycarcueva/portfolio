@@ -1,65 +1,64 @@
-# Architecture
+﻿# Architecture
 
-## Overview
+## Application boundaries
 
-This is a client-rendered single-page website using React, TypeScript, Tailwind CSS v4, and Vite. A static site fits this resume portfolio because the content is public, small, and does not need authentication or a backend. Next.js is unnecessary for the current scope. All sections remain on one page and navigation uses native fragment links.
+This portfolio uses route-based micro-frontends on one origin. React owns `/react/`; Angular owns `/angular/`. Each has its own entry point, components, state, compiler, and JavaScript bundle. Native document navigation switches frameworks, loading only the selected implementation. No iframe or runtime module federation is needed.
+
+The applications share framework-neutral content, a Tailwind design system, and static assets. They build independently but are released together as one static deployment. Separate deployments could later assign each path prefix to its own artifact at a gateway.
 
 ```text
-index.html                  HTML entry, metadata, favicon
-public/
-  favicon.svg               Original typographic favicon
-  Cliff_Randy_Carcueva_Resume.pdf
-src/
-  main.tsx                  React entry point
-  App.tsx                   Page composition and skip link
-  components/               Header, Footer, Hero, About, Experience, Skills,
-                            Education, Contact, Stats, DeveloperIllustration, SocialLinks
-  hooks/                    Theme persistence and active-section observation
-  data.ts                   Typed content, navigation, and shared contact links
-  styles.css                Tailwind theme, shared styles, effects, print rules
-vite.config.ts              React and Tailwind Vite plugins
-.prettierrc.json             Formatting and Tailwind class sorting
-playwright.config.ts        Browser test configuration
-tests/portfolio.spec.ts     Interaction and mobile checks
+src/                        React application (Vite)
+  main.tsx, App.tsx          Entry and page composition
+  components/               Sections, social links, framework switch
+  hooks/                    Theme and section observation
+  data.ts, styles.css        Compatibility imports of shared sources
+apps/angular/
+  src/main.ts, app.ts        Standalone Angular bootstrap and composition
+  src/components/           Angular section classes and templates
+  src/theme.service.ts      Signal-based theme state
+  tsconfig.app.json         TypeScript and strict template checks
+  .postcssrc.json            Tailwind PostCSS integration
+shared/
+  data.ts                   Profile, navigation, resume, contact links
+  styles.css                Design tokens, responsive and print rules
+  framework.ts              Typed cross-application URL helper
+public/                     Resume, favicon, Lucide sprite and license
+scripts/
+  dev.mjs                   Starts both development servers
+  clean-build.mjs            Cleans only the workspace dist directory
+  finalize-build.mjs         Copies assets and adds root fallback
+  preview.mjs                Serves both production outputs locally
+angular.json                Angular build and development configuration
+vite.config.ts              React build and same-origin Angular proxy
+vercel.json                 Combined build and root redirect
 ```
 
-## Rendering and data flow
+## Data and state
 
-`main.tsx` mounts `App` inside React Strict Mode. `App` only composes the page. Each section imports its content from `data.ts`, and owns the state needed for its interactions. No global state store or context is needed for this single-page site.
+Both implementations consume `shared/data.ts`; React retains `src/data.ts` as a compatibility re-export. Profile facts, links, skills, education, and introductory content are edited once. The role count derives from the experience array; years of experience remain owner-maintained.
 
-- `Header` uses `useTheme` for persisted theme selection and `useActiveSection` for navigation highlighting. The observer subscribes to sections from the navigation collection and disconnects on unmount.
-- `Experience` owns expanded entry IDs. Roles marked `current: true` start expanded and display the current badge; this does not depend on array position. Complete utility strings are checked against the experience color union.
-- `Skills` owns the selected category and preserves tab keyboard controls.
-- `Contact` owns clipboard success/error feedback and cleans up the reset timer. The visible email remains available when clipboard access fails.
-- `SocialLinks` renders icon and text variants from shared link collections. Contact destinations are derived once from `profile`; external links receive new-tab attributes while email and phone use native protocols.
-- `Hero`, `About`, `Stats`, `Education`, `Footer`, and `DeveloperIllustration` render profile/content data. The role count derives from `experiences.length`; years of experience remain an explicit owner-maintained value rather than making assumptions about career continuity.
+React uses local hooks. Angular uses standalone components, OnPush change detection, signals, computed values, and a theme service. Current jobs are explicitly marked. Each implementation owns its accordion, tabs, and clipboard feedback. Timers and section observers are cleaned up.
 
-Content types live alongside data, while React icons and style maps stay in components. The code illustration is HTML/CSS and requires no image downloads. Lucide supplies interface icons; company tiles are typographic initials rather than official logos.
+The native framework button exposes switch semantics: off means React, on means Angular. The destination URL keeps the current fragment, which each app restores after mounting. Both share the `theme` localStorage key and tolerate unavailable storage. Accordion expansion and skill selection reset when switching applications.
 
-There are no remote content requests, cookies, analytics, API credentials, or server processes. Google Fonts is an optional external stylesheet request. The resume is a static asset copied unchanged from the supplied PDF. External GitHub and LinkedIn links open a new tab with `rel="noreferrer"`; email and phone links use native protocols.
+## Styles and assets
 
-## Accessibility and responsive behavior
+Both pipelines compile `shared/styles.css` with Tailwind v4. Scanning includes React and Angular sources. Tokens, typography, theme colors, responsive breakpoints, reduced motion, and print rules are shared.
 
-Experience triggers are native buttons with `aria-expanded` and `aria-controls`. Each panel is a labelled region and uses `hidden` when collapsed, removing its contents from the accessibility tree. Enter and Space activate triggers. Skill categories use tab semantics and arrow/Home/End keyboard controls. The site includes a skip link, visible keyboard focus, labelled icon controls, and a live clipboard status message.
+Angular section hosts use `display: contents` to preserve grid and flex layouts. On tablet/mobile widths, navigation occupies a second header row. Both apps retain the skip link, native fragment navigation, labelled accordion regions, and arrow/Home/End keyboard controls for tabs.
 
-Tailwind responsive variants adapt the two-column hero and skills layout into one column on narrow screens. Experience dates wrap below the role on mobile. Reduced-motion preferences disable scrolling/transition animation. Print styles reveal all experience responsibilities; use the original resume download for the original, consistently formatted resume. Owner-requested skill additions are website content and do not modify that PDF.
+Public assets are served at the domain root. Angular uses an SVG symbol sprite with the same Lucide icons as React; the license is in `public/icons.LICENSE.txt`. There is no runtime HTML injection. Vite prefixes the HTML favicon URL, so the combined build also places it under `/react/`. Google Fonts remains optional with system font fallbacks.
 
-## Tailwind architecture
+## Development and deployment
 
-The official `@tailwindcss/vite` plugin compiles Tailwind v4 alongside React. `src/styles.css` imports Tailwind with its source root limited to `src/`, preventing documentation examples and test artifacts from generating unused utilities. Production output contains compiled CSS; users need no runtime Tailwind dependency or CDN.
+`npm run dev` starts Vite on 5173 and Angular on internal port 4201. Vite proxies `/angular/` before React base-path handling. Angular rebuilds when edited; refresh to load its changes. The supervisor stops both child servers when interrupted or when either server fails. Stop an existing session before reusing its ports.
 
-Most component styling lives directly in JSX as utilities: flex/grid layouts, spacing, borders, typography, responsive overrides, and interaction states. Semantic hooks such as `experience-trigger` remain for browser tests, print styles, and descendant treatments. Shared descendant styles use `@apply` inside `@layer components`, allowing utilities to override them predictably. Handwritten CSS is retained for the dotted illustration, decorative contact circles, accessibility defaults, and print behavior.
+`npm run build` validates TypeScript, builds React to `dist/react`, compiles Angular with strict templates to `dist/angular`, and copies shared public assets to `dist`. The root HTML is a fallback redirect for static hosts. `npm run preview` serves both outputs on port 4173. Vercel uses the combined build via `vercel.json`.
 
-`@theme inline` maps semantic color utilities (`bg-canvas`, `bg-surface`, `text-ink`, `text-muted`, `border-line`, `text-accent`) to the existing CSS variables. Changing `data-theme` on the document root updates those variables, so the same utility classes work in both themes. Fonts use `font-sans`, `font-heading`, and `font-code`. `@theme` defines the reveal animation and custom breakpoints: 640px (`mobile`), 850px (`tablet`), and 1400px (`wide`). Smaller-screen overrides use `max-mobile:` and `max-tablet:`; large layouts use `wide:`.
+Both applications are single pages with fragment navigation. Static directory indexes support direct links and reloads. Do not add a global rewrite to React; it would intercept Angular assets and entry points. Future client-side subroutes would need application-specific fallback rules.
 
-Skill tabs use `aria-selected:` utilities. Experience cards use conditional state hooks and group variants for their timeline markers. Company tile colors come from a map of complete literal utility strings. Avoid interpolated utility fragments such as `bg-${color}`: Tailwind must see full class names to include them in the generated stylesheet.
+## Verification
 
-Prettier and its Tailwind plugin format the code and sort utilities using this project's CSS theme. `npm run format` applies formatting and `npm run format:check` validates it. No JavaScript Tailwind configuration or separate PostCSS setup is needed. See the official [Vite integration](https://tailwindcss.com/docs/installation/using-vite) and [CSS theme documentation](https://tailwindcss.com/docs/theme).
+Playwright runs the interaction suite against both apps. It covers independent bootstrap, assets, framework round trips, theme/fragment preservation, clipboard feedback, accordions, tabs, resume downloads, mobile layout, keyboard access, reduced motion, and print visibility. Set `TEST_PRODUCTION=1` to test the built deployment through the preview server.
 
-## Build and verification
-
-`npm run build` runs TypeScript validation and Vite’s optimized production build. `package-lock.json` pins installed dependency versions; use `npm ci` for reproducible installs. Playwright uses Chromium to verify the primary interactions and viewport behavior. Production deployment consists of serving `dist/` as static files at a domain root; no application server is required.
-
-## Extending the site
-
-Add roles and skill groups to `data.ts`; use unique stable experience IDs. Keep factual statements tied to the resume or other owner-approved content. If adding multiple pages, introduce a router and reconsider prerendering for per-page metadata. If adding a contact form, it will require an actual submission service, validation, and spam prevention; the current contact controls deliberately use email directly.
+Use `npm ci` for locked dependencies, `npm run build` for both compilers, and `npm run format:check` for formatting. Prettier parses Angular templates separately. UI markup intentionally exists in both frameworks; put content and design changes in shared sources when possible.

@@ -1,0 +1,75 @@
+<div
+  class="hero-art relative flex min-h-[420px] items-center justify-center max-tablet:min-h-[360px] max-mobile:mt-6.5 max-mobile:min-h-[380px] wide:min-h-[440px]"
+  aria-label="Developer profile illustration"
+>
+  <div class="art-grid max-mobile:inset-x-0"></div>
+  <div
+    class="floating-label absolute top-[3px] right-1.5 z-[2] flex rotate-3 items-center gap-2 rounded-md border border-line bg-surface px-3.5 py-[11px] text-[10px] shadow-[0_4px_15px_#00000005] max-tablet:text-[8px] max-mobile:right-0 max-mobile:text-[9px]"
+  >
+    <span
+      class="status-dot inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#6a91bf] dark:bg-[#8cb4eb]"
+    ></span>
+    From frontend to backend
+  </div>
+  <div
+    class="code-card relative w-full max-w-[410px] -rotate-2 rounded-[10px] border border-line bg-surface shadow-[0_17px_36px_-18px_#263f6033] max-mobile:w-[94%] max-mobile:max-w-[370px] wide:max-w-[440px]"
+  >
+    <div
+      class="code-toolbar flex h-10.5 items-center justify-between border-b border-line px-[15px] py-0 font-mono text-[10px] text-muted"
+    >
+      <div><i></i><i></i><i></i></div>
+      <span>developer.ts</span><portfolio-icon name="Code2" [size]="14"></portfolio-icon>
+    </div>
+    <div
+      class="code-content px-5 pt-5.5 pb-[25px] font-code text-[11px] leading-[1.95] text-ink max-tablet:px-[13px] max-tablet:py-4.5 max-tablet:text-[9px] max-mobile:px-4 max-mobile:py-5 max-mobile:text-[10px] wide:text-[12px]"
+    >
+      <p><span class="syntax text-[#9c79ac]">const</span> developer = &#123;</p>
+      <p>
+        &nbsp; name: <span class="string text-leaf">'{{ profile.shortName }}'</span>,
+      </p>
+      <p>
+        &nbsp; role: <span class="string text-leaf">'{{ profile.role }}'</span>,
+      </p>
+      <p>
+        &nbsp; experience:
+        <span class="number text-[#bd9560]">{{ profile.yearsExperience }}</span> +
+        <span class="string text-leaf">' years'</span>,
+      </p>
+      <p>&nbsp; stack: [</p>
+      @for (technology of profile.featuredStack; track technology; let index = $index) {
+        <span>
+          @if (index % 2 === 0) {
+            &nbsp;&nbsp;&nbsp;
+          } @else {}
+          <span class="string text-leaf">'{{ technology }}'</span
+          >{{ index < profile.featuredStack.length - 1 ? ',' : '' }}
+          @if (index % 2 === 1 || index === profile.featuredStack.length - 1) {
+            <br />
+          }
+        </span>
+      }
+      <p>&nbsp; ],</p>
+      <p>
+        &nbsp; mindset: <span class="string text-leaf">'{{ profile.mindset }}'</span>
+      </p>
+      <p>&#125;;</p>
+      <p class="code-comment">// Built on experience. Driven by curiosity.</p>
+    </div>
+    <div
+      class="code-footer flex justify-between border-t border-line px-[15px] py-[11px] text-[9px] text-muted"
+    >
+      <span
+        ><span
+          class="status-dot inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#6a91bf] dark:bg-[#8cb4eb]"
+        ></span>
+        Crafting better software </span
+      ><span>TypeScript</span>
+    </div>
+  </div>
+  <div
+    class="small-art-label absolute bottom-[1px] left-5.5 z-[2] flex rotate-2 items-center gap-2 rounded-md border border-line bg-surface px-3.5 py-[11px] text-[10px] text-accent shadow-[0_4px_15px_#00000005] max-tablet:text-[8px] max-mobile:bottom-0 max-mobile:left-0.5 max-mobile:text-[9px]"
+  >
+    <portfolio-icon name="Terminal" [size]="16"></portfolio-icon
+    ><span>Ideas → interfaces → impact</span>
+  </div>
+</div>

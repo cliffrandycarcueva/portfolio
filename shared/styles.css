@@ -2,6 +2,24 @@
 @import 'tailwindcss' source('../src');
 @source '../apps/angular/src';
 
+.framework-code {
+  margin: 0;
+  min-height: 28em;
+  font: inherit;
+  line-height: 1.95;
+  white-space: pre;
+  overflow-x: auto;
+}
+.framework-code code {
+  font: inherit;
+}
+.framework-code .code-keyword {
+  color: #9c79ac;
+}
+.framework-code .code-template {
+  color: var(--green);
+}
+
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme inline {

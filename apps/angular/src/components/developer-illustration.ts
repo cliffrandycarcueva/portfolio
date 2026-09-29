@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { profile } from '../../../../shared/data';
+import { codeExamples } from '../../../../shared/code-examples';
 import { Icon } from './icon';
 
 @Component({
@@ -9,5 +9,5 @@ import { Icon } from './icon';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeveloperIllustration {
-  readonly profile = profile;
+  readonly example = codeExamples.angular;
 }

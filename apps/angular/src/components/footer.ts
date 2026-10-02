@@ -9,6 +9,9 @@ import { SocialLinks } from './social-links';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Footer {
+  openOwner() {
+    window.dispatchEvent(new Event('portfolio-owner'));
+  }
   readonly profile = profile;
   readonly year = new Date().getFullYear();
 }

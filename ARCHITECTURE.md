@@ -4,7 +4,7 @@
 
 This portfolio uses route-based micro-frontends on one origin. React owns `/react/`; Angular owns `/angular/`. Each has its own entry point, components, state, compiler, and JavaScript bundle. Native document navigation switches frameworks, loading only the selected implementation. No iframe or runtime module federation is needed.
 
-The applications share framework-neutral content, a Tailwind design system, and static assets. They build independently but are released together as one static deployment. Separate deployments could later assign each path prefix to its own artifact at a gateway.
+The applications share framework-neutral content, a Tailwind design system, and static assets. They build independently but are released together. The frontends support static deployment; live messaging requires the NestJS service described below. Separate deployments could later assign each path prefix to its own artifact at a gateway.
 
 ```text
 src/                        React application (Vite)
@@ -34,6 +34,10 @@ vercel.json                 Combined build and root redirect
 ```
 
 ## Data and state
+
+### Messaging backend
+
+`apps/api` contains a NestJS service backed by MongoDB, with email verification, cookie sessions, owner PIN authentication, private conversation APIs, an email outbox, and authenticated server-sent events. `shared/messaging.ts` owns framework-neutral client state and transport; React and Angular each render their own Contact chat UI. The API can serve both built frontends for one same-origin deployment. See [MESSAGING.md](./MESSAGING.md) for setup, security boundaries, tests, and the single-instance deployment constraint.
 
 Both implementations consume `shared/data.ts`; React retains `src/data.ts` as a compatibility re-export. Profile facts, links, skills, education, and introductory content are edited once. The role count derives from the experience array; years of experience remain owner-maintained.
 

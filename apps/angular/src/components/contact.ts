@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { contactLinks, profile } from '../../../../shared/data';
 import { Icon } from './icon';
+import { Messaging } from './messaging';
 
 @Component({
   selector: 'portfolio-contact',
-  imports: [Icon],
+  imports: [Icon, Messaging],
   templateUrl: './contact.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -11,6 +11,14 @@ export function Footer() {
           {profile.brand}
           <span>.</span>
         </a>
+        <button
+          className="owner-entry"
+          aria-label="Owner sign in"
+          title="Owner sign in"
+          onClick={() => window.dispatchEvent(new Event('portfolio-owner'))}
+        >
+          ◦
+        </button>
         <span>
           © {new Date().getFullYear()} {profile.name}
         </span>

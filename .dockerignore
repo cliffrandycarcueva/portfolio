@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.env
+.env.*
+apps/api/build
+.angular
+.local
+test-results
+playwright-report

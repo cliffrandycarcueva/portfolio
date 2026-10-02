@@ -4,6 +4,8 @@ A responsive **React + Angular** portfolio using TypeScript and Tailwind CSS v4.
 
 ## Run locally
 
+Recruiter chat is available in the Contact section of both apps. The NestJS backend lives in this repository under `apps/api`. See [MESSAGING.md](./MESSAGING.md) for MongoDB options, owner PIN setup, email delivery, and `npm run dev:full`. You can use MongoDB Atlas or Docker without installing MongoDB directly.
+
 Install **Node.js 22.12+** (Node 24 LTS also works), then open a terminal in this project folder:
 
 ```sh
@@ -24,7 +26,7 @@ npm run build
 npm run preview
 ```
 
-Open **http://localhost:4173/react/** or **http://localhost:4173/angular/**. The production files are in `dist/`; deploy that folder to a static host. Both applications run on the same domain, with no subdomains or backend required.
+Open **http://localhost:4173/react/** or **http://localhost:4173/angular/**. The frontend production files are in `dist/`; deploy that folder to a static host. Both applications run on the same domain. Live messaging additionally requires the NestJS service; use `npm run build:full` and the deployment instructions in [MESSAGING.md](./MESSAGING.md).
 
 For Vercel, import the repository at root `./` with framework preset **Other**. `vercel.json` specifies `npm run build`, output directory `dist`, and the root redirect. Other hosts must serve directory index files and redirect `/` to `/react/`. Do not add a global rewrite to the React entry: it would intercept Angular requests.
 

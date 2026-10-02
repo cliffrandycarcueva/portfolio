@@ -5,3 +5,9 @@ playwright-report/
 *.tsbuildinfo
 resume-preview.png
 .angular/
+.env
+.env.*
+!.env.example
+apps/api/build/
+
+.local/

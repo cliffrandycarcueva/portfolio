@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, Check, Copy } from 'lucide-react';
 import { contactLinks, profile } from '../data';
+import { Messaging } from './Messaging';
 export function Contact() {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
@@ -61,6 +62,7 @@ export function Contact() {
       >
         {profile.email}
       </a>
+      <Messaging />
       <div className="copy-status mt-1.5 h-[15px] text-[10px] text-accent" role="status">
         {copyError
           ? 'Please select and copy the email address above.'

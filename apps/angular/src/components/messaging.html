@@ -1,0 +1,199 @@
+<button
+  #launcher
+  class="chat-launch"
+  (click)="chat.open()"
+  [attr.aria-expanded]="state().open"
+  aria-controls="messaging-dock"
+>
+  <portfolio-icon
+    [name]="state().role === 'owner' ? 'Bell' : 'MessageCircle'"
+    [size]="18"
+  ></portfolio-icon>
+  {{ state().role === 'owner' ? 'Message inbox' : 'Message me' }}
+  @if (chat.unread > 0) {
+    <span class="chat-badge">{{ chat.unread }}</span>
+  }
+</button>
+@if (state().open) {
+  <aside
+    #dock
+    id="messaging-dock"
+    class="chat-dock"
+    role="dialog"
+    aria-label="Portfolio messages"
+    tabindex="-1"
+    (keydown.escape)="close()"
+  >
+    <header class="chat-header">
+      <div>
+        <strong>{{ state().role === 'owner' ? 'Your inbox' : 'Let’s talk' }}</strong
+        ><small>{{
+          state().role
+            ? state().connected
+              ? 'Connected · private conversation'
+              : 'Reconnecting…'
+            : 'A direct conversation with Cliff'
+        }}</small>
+      </div>
+      <button aria-label="Close messages" (click)="close()">×</button>
+    </header>
+    @if (state().error) {
+      <p class="chat-error" role="alert">{{ state().error }}</p>
+    }
+    @switch (state().step) {
+      @case ('email') {
+        <form class="chat-form" (submit)="submit($event, 'identify')">
+          <p>Enter your email to start or continue a conversation.</p>
+          <label
+            >Email<input
+              type="email"
+              autocomplete="email"
+              required
+              maxlength="254"
+              [value]="state().email"
+              (input)="chat.patch({ email: value($event) })" /></label
+          ><small>We’ll send a verification code on a new browser. Your email stays private.</small
+          ><button [disabled]="state().busy">Send verification code</button>
+        </form>
+      }
+      @case ('code') {
+        <form class="chat-form" (submit)="submit($event, 'verify')">
+          <p>Enter the code sent to {{ state().email }}.</p>
+          <label
+            >Verification code<input
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              pattern="[0-9]{6}"
+              required
+              maxlength="6"
+              [value]="state().code"
+              (input)="chat.patch({ code: value($event) })" /></label
+          ><button [disabled]="state().busy">Continue</button
+          ><button
+            type="button"
+            class="chat-quiet"
+            [disabled]="state().busy"
+            (click)="chat.patch({ step: 'email', error: '' })"
+          >
+            Change email or request another code
+          </button>
+        </form>
+      }
+      @case ('nickname') {
+        <form class="chat-form" (submit)="submit($event, 'nickname')">
+          <label
+            >What should I call you?<input
+              autocomplete="nickname"
+              required
+              maxlength="60"
+              [value]="state().nickname"
+              (input)="chat.patch({ nickname: value($event) })" /></label
+          ><button [disabled]="state().busy">Start conversation</button>
+        </form>
+      }
+      @case ('owner') {
+        <form class="chat-form" (submit)="submit($event, 'owner')">
+          <label
+            >Owner PIN<input
+              type="password"
+              inputmode="numeric"
+              autocomplete="current-password"
+              required
+              maxlength="128"
+              [value]="state().pin"
+              (input)="chat.patch({ pin: value($event) })" /></label
+          ><button [disabled]="state().busy">Open inbox</button
+          ><button
+            class="chat-quiet"
+            type="button"
+            (click)="chat.patch({ step: state().role ? 'chat' : 'email' })"
+          >
+            Back
+          </button>
+        </form>
+      }
+      @case ('chat') {
+        @if (state().role === 'owner' && !state().selected) {
+          <div class="chat-inbox">
+            @if (state().conversations.length === 0) {
+              <p>No conversations yet.</p>
+            }
+            @for (item of state().conversations; track item._id) {
+              <button (click)="chat.select(item._id)">
+                <strong
+                  >{{ item.nickname || 'New recruiter' }}
+                  @if (item.unread > 0) {
+                    <span class="chat-badge">{{ item.unread }}</span>
+                  }</strong
+                ><small>{{ item.email }}</small
+                ><span>{{ item.latest?.body || 'No messages yet' }}</span>
+                @if (item.latest) {
+                  <small>{{ item.latest.createdAt | date: 'short' }}</small>
+                }
+              </button>
+            }
+          </div>
+        }
+        @if (state().selected) {
+          @if (state().role === 'owner') {
+            <div class="chat-person">
+              <button (click)="chat.select('')">← Inbox</button
+              ><strong>{{ current?.nickname }}</strong
+              ><small>{{ current?.email }}</small>
+            </div>
+          }
+          <div
+            #log
+            class="chat-log"
+            role="log"
+            aria-label="Conversation messages"
+            aria-live="polite"
+          >
+            @if (state().more) {
+              <button class="chat-quiet" [disabled]="state().busy" (click)="chat.older()">
+                Load older messages
+              </button>
+            }
+            @if (state().messages.length === 0) {
+              <p class="chat-empty">Say hello. Messages stay here, even when we’re offline.</p>
+            }
+            @for (message of state().messages; track message._id) {
+              <article class="chat-message" [class.chat-mine]="message.sender === state().role">
+                <small>{{
+                  message.sender === state().role
+                    ? 'You'
+                    : message.sender === 'owner'
+                      ? 'Cliff'
+                      : current?.nickname
+                }}</small>
+                <p>{{ message.body }}</p>
+                <time [attr.datetime]="message.createdAt">{{
+                  message.createdAt | date: 'shortTime'
+                }}</time>
+              </article>
+            }
+          </div>
+          <form class="chat-composer" (submit)="submit($event, 'send')">
+            <label class="sr-only" for="chat-message">Message</label
+            ><textarea
+              id="chat-message"
+              placeholder="Write a message…"
+              required
+              maxlength="4000"
+              rows="2"
+              [value]="state().draft"
+              (input)="chat.patch({ draft: value($event) })"
+            ></textarea
+            ><button [disabled]="state().busy || !state().draft.trim()">Send</button>
+          </form>
+        }
+      }
+    }
+    @if (state().role) {
+      <div class="chat-session">
+        <span>{{ state().role === 'owner' ? 'Owner session' : state().recruiter?.email }}</span
+        ><button [disabled]="state().busy" (click)="chat.logout()">Sign out</button>
+      </div>
+    }
+  </aside>
+}

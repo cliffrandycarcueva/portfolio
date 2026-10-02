@@ -88,40 +88,49 @@ export function Messaging() {
                     onChange={(e) => chat.patch({ email: e.target.value })}
                   />
                 </label>
-                <small>
-                  We’ll send a verification code on a new browser. Your email stays private.
-                </small>
-                <button disabled={state.busy}>Send verification code</button>
+                <small>Your email identifies your conversation. Your PIN keeps it private.</small>
+                <button disabled={state.busy}>Continue</button>
               </form>
             )}
-            {state.step === 'code' && (
-              <form className="chat-form" onSubmit={submit(() => chat.verify())}>
-                <p>Enter the code sent to {state.email}.</p>
+            {state.step === 'login' && (
+              <form className="chat-form" onSubmit={submit(() => chat.login())}>
+                <p>Welcome back. Enter your PIN for {state.email}.</p>
                 <label>
-                  Verification code
+                  Your PIN
                   <input
+                    type="password"
                     inputMode="numeric"
-                    autoComplete="one-time-code"
-                    pattern="[0-9]{6}"
+                    autoComplete="current-password"
+                    pattern="[0-9]{6,32}"
                     required
-                    maxLength={6}
-                    value={state.code}
-                    onChange={(e) => chat.patch({ code: e.target.value })}
+                    minLength={6}
+                    maxLength={32}
+                    value={state.pin}
+                    onChange={(e) => chat.patch({ pin: e.target.value })}
                   />
                 </label>
-                <button disabled={state.busy}>Continue</button>
+                <button disabled={state.busy}>Open conversation</button>
+                <small>
+                  No email codes are sent. If you forget your PIN, contact Cliff through the email
+                  link.
+                </small>
                 <button
                   type="button"
                   className="chat-quiet"
                   disabled={state.busy}
-                  onClick={() => chat.patch({ step: 'email', error: '' })}
+                  onClick={() => chat.patch({ step: 'email', pin: '', confirmPin: '', error: '' })}
                 >
-                  Change email or request another code
+                  Change email
                 </button>
               </form>
             )}
-            {state.step === 'nickname' && (
-              <form className="chat-form" onSubmit={submit(() => chat.nickname())}>
+            {(state.step === 'register' || state.step === 'set-pin') && (
+              <form className="chat-form" onSubmit={submit(() => chat.register())}>
+                <p>
+                  {state.step === 'set-pin'
+                    ? 'Choose a PIN to keep access to your existing conversation.'
+                    : 'Introduce yourself and choose a PIN for your conversation.'}
+                </p>
                 <label>
                   What should I call you?
                   <input
@@ -132,7 +141,52 @@ export function Messaging() {
                     onChange={(e) => chat.patch({ nickname: e.target.value })}
                   />
                 </label>
-                <button disabled={state.busy}>Start conversation</button>
+                <label>
+                  Choose a PIN
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    autoComplete="new-password"
+                    pattern="[0-9]{6,32}"
+                    required
+                    minLength={6}
+                    maxLength={32}
+                    value={state.pin}
+                    onChange={(e) => chat.patch({ pin: e.target.value })}
+                  />
+                </label>
+                <label>
+                  Confirm PIN
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    autoComplete="new-password"
+                    pattern="[0-9]{6,32}"
+                    required
+                    minLength={6}
+                    maxLength={32}
+                    value={state.confirmPin}
+                    onChange={(e) => chat.patch({ confirmPin: e.target.value })}
+                  />
+                </label>
+                <small>
+                  Use 6 to 32 digits and save your PIN. There is no automatic PIN recovery.
+                </small>
+                <button disabled={state.busy}>
+                  {state.step === 'set-pin' ? 'Save PIN' : 'Start conversation'}
+                </button>
+                {state.step === 'register' && (
+                  <button
+                    type="button"
+                    className="chat-quiet"
+                    disabled={state.busy}
+                    onClick={() =>
+                      chat.patch({ step: 'email', pin: '', confirmPin: '', error: '' })
+                    }
+                  >
+                    Change email
+                  </button>
+                )}
               </form>
             )}
             {state.step === 'owner' && (

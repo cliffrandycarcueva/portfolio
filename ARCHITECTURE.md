@@ -37,7 +37,7 @@ vercel.json                 Combined build and root redirect
 
 ### Messaging backend
 
-`apps/api` contains a NestJS service backed by MongoDB, with email verification, cookie sessions, owner PIN authentication, private conversation APIs, an email outbox, and authenticated server-sent events. `shared/messaging.ts` owns framework-neutral client state and transport; React and Angular each render their own Contact chat UI. The API can serve both built frontends for one same-origin deployment. See [MESSAGING.md](./MESSAGING.md) for setup, security boundaries, tests, and the single-instance deployment constraint.
+`apps/api` contains a NestJS service backed by MongoDB, with recruiter email/PIN authentication, cookie sessions, owner PIN authentication, private conversation APIs, and authenticated server-sent events. No emails are sent. `shared/messaging.ts` owns framework-neutral client state and transport; React and Angular each render their own Contact chat UI. The API can serve both built frontends for one same-origin deployment. On Vercel, `api/index.js` caches the initialized Nest app and database pool; MongoDB change streams deliver events across instances. SSE requests close after 45 seconds and reconnect before the 60-second function limit. See [MESSAGING.md](./MESSAGING.md) for setup, security boundaries, and tests.
 
 Both implementations consume `shared/data.ts`; React retains `src/data.ts` as a compatibility re-export. Profile facts, links, skills, education, and introductory content are edited once. The role count derives from the experience array; years of experience remain owner-maintained.
 

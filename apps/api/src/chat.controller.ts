@@ -11,20 +11,37 @@ import {
   ForbiddenException,
   BadRequestException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { randomInt, randomUUID } from 'node:crypto';
-import { Store, Session } from './store';
-import { Mail } from './mail';
-import { checkPin, digest, email, text, token } from './security';
+import { randomUUID } from 'node:crypto';
+import { Store, Session, Recruiter } from './store';
+import { MongoServerError } from 'mongodb';
+import {
+  checkPin,
+  digest,
+  email,
+  text,
+  token,
+  recruiterPin,
+  hashPin,
+  matchesPin,
+} from './security';
 
 @Controller('api')
 export class ChatController {
   private readonly listeners = new Set<{ session: Session; response: Response }>();
-  constructor(
-    private readonly store: Store,
-    private readonly mail: Mail,
-  ) {}
+  constructor(private readonly store: Store) {}
+  private publicRecruiter(recruiter: Recruiter | null) {
+    return recruiter
+      ? {
+          _id: recruiter._id,
+          email: recruiter.email,
+          nickname: recruiter.nickname,
+          needsPin: !recruiter.pinHash,
+        }
+      : null;
+  }
   private async session(req: Request) {
     const value = req.cookies?.portfolio_session;
     const session =
@@ -60,6 +77,7 @@ export class ChatController {
     return session;
   }
   private publish(conversation: string) {
+    if (process.env.VERCEL === '1' || process.env.REALTIME_MODE === 'database') return;
     for (const listener of this.listeners) {
       if (listener.session.expiresAt <= new Date()) {
         listener.response.end();
@@ -78,73 +96,78 @@ export class ChatController {
       const recruiter = session.recruiterId
         ? await this.store.recruiters.findOne({ _id: session.recruiterId })
         : null;
-      return { role: session.role, recruiter };
+      return { role: session.role, recruiter: this.publicRecruiter(recruiter) };
     } catch (error) {
       if (error instanceof UnauthorizedException) return { role: null };
       throw error;
     }
   }
-  @Post('auth/email') async start(@Body() body: Record<string, unknown>, @Req() req: Request) {
+  @Post('auth/email') async identify(@Body() body: Record<string, unknown>, @Req() req: Request) {
     const address = email(body.email);
-    await this.store.limit(`email-ip:${req.ip}`, 10, 600);
-    await this.store.limit(`email:${address}`, 3, 600);
-    const id = token();
-    const code = String(randomInt(100000, 1000000));
-    await this.store.challenges.insertOne({
-      _id: id,
-      email: address,
-      hash: digest(`${id}:${code}`),
-      attempts: 0,
-      expiresAt: new Date(Date.now() + 10 * 60000),
-    });
-    try {
-      await this.mail.send(
-        address,
-        'Your portfolio chat verification code',
-        `Your verification code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.`,
-        `verify-${id}`,
-      );
-    } catch (error) {
-      await this.store.challenges.deleteOne({ _id: id });
-      throw error;
-    }
-    return { challengeId: id };
+    await this.store.limit(`identify:${req.ip}`, 30, 600);
+    const recruiter = await this.store.recruiters.findOne(
+      { email: address },
+      { projection: { _id: 1 } },
+    );
+    // This email-first flow intentionally reveals registration status, never profile/history.
+    return { exists: Boolean(recruiter) };
   }
-  @Post('auth/verify') async verify(
+  @Post('auth/register') async register(
     @Body() body: Record<string, unknown>,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    await this.store.limit(`verify:${req.ip}`, 30, 600);
-    const id = text(body.challengeId, 64, 'verification request');
-    const code = text(body.code, 6, 'verification code');
-    const challenge = await this.store.challenges.findOneAndUpdate(
-      { _id: id, expiresAt: { $gt: new Date() }, attempts: { $lt: 5 } },
-      { $inc: { attempts: 1 } },
-      { returnDocument: 'after' },
-    );
-    if (!challenge || challenge.hash !== digest(`${id}:${code}`))
-      throw new UnauthorizedException('Invalid or expired code. Request a new code if needed.');
-    const consumed = await this.store.challenges.deleteOne({ _id: id });
-    if (!consumed.deletedCount) throw new UnauthorizedException('Code already used.');
-    const recruiter = await this.store.recruiters.findOneAndUpdate(
-      { email: challenge.email },
-      { $setOnInsert: { _id: randomUUID(), nickname: '', createdAt: new Date() } },
-      { upsert: true, returnDocument: 'after' },
-    );
-    await this.issue(res, 'recruiter', recruiter!._id);
-    return { role: 'recruiter', recruiter };
+    const address = email(body.email);
+    const pin = recruiterPin(body.pin);
+    if (body.confirmPin !== pin) throw new BadRequestException('The PINs do not match.');
+    const nickname = text(body.nickname, 60, 'nickname');
+    await this.store.limit(`register:${req.ip}`, 10, 3600);
+    const recruiter: Recruiter = {
+      _id: randomUUID(),
+      email: address,
+      nickname,
+      pinHash: await hashPin(pin),
+      createdAt: new Date(),
+    };
+    try {
+      await this.store.recruiters.insertOne(recruiter);
+    } catch (error) {
+      if (error instanceof MongoServerError && error.code === 11000)
+        throw new ConflictException(
+          'This email already has a conversation. Go back and sign in with its PIN.',
+        );
+      throw error;
+    }
+    await this.issue(res, 'recruiter', recruiter._id);
+    return { role: 'recruiter', recruiter: this.publicRecruiter(recruiter) };
   }
-  @Post('auth/nickname') async nickname(
+  @Post('auth/login') async login(
     @Body() body: Record<string, unknown>,
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ) {
+    const address = email(body.email);
+    const pin = recruiterPin(body.pin);
+    await this.store.limit(`login-ip:${req.ip}`, 20, 900);
+    await this.store.limit(`login-email:${address}`, 5, 900);
+    const recruiter = await this.store.recruiters.findOne({ email: address });
+    if (!recruiter?.pinHash || !(await matchesPin(pin, recruiter.pinHash)))
+      throw new UnauthorizedException('Incorrect email or PIN.');
+    await this.issue(res, 'recruiter', recruiter._id);
+    return { role: 'recruiter', recruiter: this.publicRecruiter(recruiter) };
+  }
+  @Post('auth/set-pin') async setPin(@Body() body: Record<string, unknown>, @Req() req: Request) {
+    // Existing email-verified sessions may set their first PIN. Knowing an old email is insufficient.
     const session = await this.session(req);
     if (session.role !== 'recruiter') throw new ForbiddenException();
-    await this.store.recruiters.updateOne(
-      { _id: session.recruiterId },
-      { $set: { nickname: text(body.nickname, 60, 'nickname') } },
+    const pin = recruiterPin(body.pin);
+    if (body.confirmPin !== pin) throw new BadRequestException('The PINs do not match.');
+    await this.store.limit(`set-pin:${session._id}`, 5, 900);
+    const result = await this.store.recruiters.updateOne(
+      { _id: session.recruiterId, pinHash: { $exists: false } },
+      { $set: { pinHash: await hashPin(pin), nickname: text(body.nickname, 60, 'nickname') } },
     );
+    if (!result.modifiedCount) throw new ConflictException('A PIN is already set.');
     return this.current(req);
   }
   @Post('auth/owner') async owner(
@@ -154,7 +177,7 @@ export class ChatController {
   ) {
     await this.store.limit(`pin:${req.ip}`, 5, 900);
     await this.store.limit('pin-global', 30, 900);
-    checkPin(body.pin);
+    await checkPin(body.pin);
     await this.issue(res, 'owner');
     return { role: 'owner', recruiter: null };
   }
@@ -255,7 +278,14 @@ export class ChatController {
       messages: rows
         .slice(0, 50)
         .reverse()
-        .map(({ notificationPending, notificationAttempt, notifyAfter, ...message }) => message),
+        .map((message) => ({
+          _id: message._id,
+          conversationId: message.conversationId,
+          sender: message.sender,
+          body: message.body,
+          createdAt: message.createdAt,
+          read: message.read,
+        })),
       more,
     };
   }
@@ -284,9 +314,6 @@ export class ChatController {
           body: text(body.body, 4000, 'message (up to 4,000 characters)'),
           createdAt: new Date(),
           read: false,
-          notificationPending: session.role === 'recruiter',
-          notificationAttempt: 0,
-          notifyAfter: new Date(Date.now() + 60000),
         },
       },
       { upsert: true },
@@ -324,20 +351,79 @@ export class ChatController {
     const session = await this.session(req);
     if ([...this.listeners].filter((item) => item.session._id === session._id).length >= 5)
       throw new BadRequestException('Too many open chat tabs.');
+    const databaseEvents = process.env.VERCEL === '1' || process.env.REALTIME_MODE === 'database';
+    const changes = databaseEvents
+      ? this.store.messages.watch(
+          session.role === 'owner'
+            ? []
+            : [{ $match: { 'fullDocument.conversationId': session.recruiterId } }],
+          { fullDocument: 'updateLookup', maxAwaitTimeMS: 1000 },
+        )
+      : undefined;
+    // Prime the cursor before advertising a connected stream, so the first send is observed.
+    try {
+      if (changes) await changes.tryNext();
+    } catch (error) {
+      await changes?.close();
+      throw error;
+    }
+    if (res.destroyed) {
+      await changes?.close();
+      return;
+    }
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders();
     const listener = { session, response: res };
     this.listeners.add(listener);
-    res.write('data: {"connected":true}\n\n');
-    const timer = setInterval(() => {
-      if (session.expiresAt <= new Date()) res.end();
-      else res.write(': heartbeat\n\n');
-    }, 20000);
+    res.write('retry: 1000\ndata: {"connected":true}\n\n');
+    let closed = false;
+    let checking = false;
+    const close = () => {
+      if (!res.writableEnded) res.end();
+    };
+    const heartbeat = setInterval(async () => {
+      if (checking || closed) return;
+      checking = true;
+      try {
+        const active = await this.store.sessions.findOne({
+          _id: session._id,
+          expiresAt: { $gt: new Date() },
+        });
+        if (!active) close();
+        else if (!closed) res.write(': heartbeat\n\n');
+      } catch {
+        close();
+      } finally {
+        checking = false;
+      }
+    }, 10000);
+    // Vercel streams end before the configured 60-second function limit; EventSource reconnects.
+    const deadline = setTimeout(close, 45000);
     res.on('close', () => {
-      clearInterval(timer);
+      closed = true;
+      clearInterval(heartbeat);
+      clearTimeout(deadline);
       this.listeners.delete(listener);
+      void changes?.close().catch(() => undefined);
     });
+    if (changes) {
+      try {
+        for await (const change of changes) {
+          if (closed) break;
+          if ('fullDocument' in change && change.fullDocument) {
+            const conversationId = change.fullDocument.conversationId;
+            if (session.role === 'owner' || session.recruiterId === conversationId)
+              res.write(`data: ${JSON.stringify({ conversationId })}\n\n`);
+          }
+        }
+      } catch {
+        /* Reconnect fetches database history after a cursor/network interruption. */
+      } finally {
+        close();
+        await changes.close().catch(() => undefined);
+      }
+    }
   }
 }

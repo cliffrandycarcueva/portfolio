@@ -40,6 +40,63 @@
     @if (state().error) {
       <p class="chat-error" role="alert">{{ state().error }}</p>
     }
+    @if (state().step === 'register' || state().step === 'set-pin') {
+      <form class="chat-form" (submit)="submit($event, 'register')">
+        <p>
+          {{
+            state().step === 'set-pin'
+              ? 'Choose a PIN to keep access to your existing conversation.'
+              : 'Introduce yourself and choose a PIN for your conversation.'
+          }}
+        </p>
+        <label
+          >What should I call you?<input
+            autocomplete="nickname"
+            required
+            maxlength="60"
+            [value]="state().nickname"
+            (input)="chat.patch({ nickname: value($event) })"
+        /></label>
+        <label
+          >Choose a PIN<input
+            type="password"
+            inputmode="numeric"
+            autocomplete="new-password"
+            pattern="[0-9]{6,32}"
+            required
+            minlength="6"
+            maxlength="32"
+            [value]="state().pin"
+            (input)="chat.patch({ pin: value($event) })"
+        /></label>
+        <label
+          >Confirm PIN<input
+            type="password"
+            inputmode="numeric"
+            autocomplete="new-password"
+            pattern="[0-9]{6,32}"
+            required
+            minlength="6"
+            maxlength="32"
+            [value]="state().confirmPin"
+            (input)="chat.patch({ confirmPin: value($event) })"
+        /></label>
+        <small>Use 6 to 32 digits and save your PIN. There is no automatic PIN recovery.</small>
+        <button [disabled]="state().busy">
+          {{ state().step === 'set-pin' ? 'Save PIN' : 'Start conversation' }}
+        </button>
+        @if (state().step === 'register') {
+          <button
+            type="button"
+            class="chat-quiet"
+            [disabled]="state().busy"
+            (click)="chat.patch({ step: 'email', pin: '', confirmPin: '', error: '' })"
+          >
+            Change email
+          </button>
+        }
+      </form>
+    }
     @switch (state().step) {
       @case ('email') {
         <form class="chat-form" (submit)="submit($event, 'identify')">
@@ -51,44 +108,40 @@
               required
               maxlength="254"
               [value]="state().email"
-              (input)="chat.patch({ email: value($event) })" /></label
-          ><small>We’ll send a verification code on a new browser. Your email stays private.</small
-          ><button [disabled]="state().busy">Send verification code</button>
+              (input)="chat.patch({ email: value($event) })"
+          /></label>
+          <small>Your email identifies your conversation. Your PIN keeps it private.</small>
+          <button [disabled]="state().busy">Continue</button>
         </form>
       }
-      @case ('code') {
-        <form class="chat-form" (submit)="submit($event, 'verify')">
-          <p>Enter the code sent to {{ state().email }}.</p>
+      @case ('login') {
+        <form class="chat-form" (submit)="submit($event, 'login')">
+          <p>Welcome back. Enter your PIN for {{ state().email }}.</p>
           <label
-            >Verification code<input
+            >Your PIN<input
+              type="password"
               inputmode="numeric"
-              autocomplete="one-time-code"
-              pattern="[0-9]{6}"
+              autocomplete="current-password"
+              pattern="[0-9]{6,32}"
               required
-              maxlength="6"
-              [value]="state().code"
-              (input)="chat.patch({ code: value($event) })" /></label
-          ><button [disabled]="state().busy">Continue</button
-          ><button
+              minlength="6"
+              maxlength="32"
+              [value]="state().pin"
+              (input)="chat.patch({ pin: value($event) })"
+          /></label>
+          <button [disabled]="state().busy">Open conversation</button>
+          <small
+            >No email codes are sent. If you forget your PIN, contact Cliff through the email
+            link.</small
+          >
+          <button
             type="button"
             class="chat-quiet"
             [disabled]="state().busy"
-            (click)="chat.patch({ step: 'email', error: '' })"
+            (click)="chat.patch({ step: 'email', pin: '', confirmPin: '', error: '' })"
           >
-            Change email or request another code
+            Change email
           </button>
-        </form>
-      }
-      @case ('nickname') {
-        <form class="chat-form" (submit)="submit($event, 'nickname')">
-          <label
-            >What should I call you?<input
-              autocomplete="nickname"
-              required
-              maxlength="60"
-              [value]="state().nickname"
-              (input)="chat.patch({ nickname: value($event) })" /></label
-          ><button [disabled]="state().busy">Start conversation</button>
         </form>
       }
       @case ('owner') {

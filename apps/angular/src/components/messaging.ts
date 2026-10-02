@@ -43,7 +43,7 @@ export class Messaging {
   value(event: Event) {
     return (event.target as HTMLInputElement).value;
   }
-  submit(event: Event, action: 'identify' | 'verify' | 'nickname' | 'owner' | 'send') {
+  submit(event: Event, action: 'identify' | 'login' | 'register' | 'owner' | 'send') {
     event.preventDefault();
     void this.chat[action]();
   }

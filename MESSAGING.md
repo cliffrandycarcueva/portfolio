@@ -1,79 +1,88 @@
 # Portfolio messaging
 
-The React and Angular Contact sections share a NestJS API in `apps/api`. Recruiters verify their email with a six-digit code, enter a nickname once, and return directly to their conversation while their 30-day browser session is valid. A new browser or expired session requires another email code. Both framework routes share the same session cookie.
+Both Contact sections use the NestJS API in `apps/api`. Recruiters enter their email first. A new email leads to nickname, PIN, and PIN confirmation; a returning email requires its existing PIN. PINs contain 6 to 32 digits. A remembered browser session resumes the conversation directly for up to 30 days, including across framework switches.
 
-Click the small circle beside CRC in the footer for owner login. A valid owner PIN opens the inbox and changes the Contact message button into a bell with an unread count. Owner sessions last 12 hours. Email notification links open the relevant conversation after login.
+Click the small circle beside CRC for owner login. The owner PIN opens the inbox and its unread bell. Owner sessions last 12 hours. The owner PIN is independent of recruiter PINs.
+
+**No email is sent.** There are no verification codes, mail-provider credentials, background notification jobs, or sender-domain requirements. The portfolio can keep its free Vercel address. The normal contact email links remain available.
 
 ## Local setup
 
-You **do not need to install MongoDB directly on your machine**. Choose either:
+You do not need to install MongoDB directly. Use MongoDB Atlas, the included Docker database (`docker compose up -d mongodb`), or an existing local MongoDB installation.
 
-- A MongoDB Atlas database: put its connection string in `MONGODB_URI`, allow your development IP in Atlas, and use a database user limited to this database.
-- Docker Desktop: run `docker compose up -d mongodb`. The included compose file binds MongoDB only to localhost and preserves data in a named volume.
-- An existing local MongoDB installation also works with the default URI.
-
-From the repository root, in PowerShell:
+From the repository root:
 
 ```powershell
 npm.cmd install
+# Only if .env does not already exist:
 Copy-Item .env.example .env
 npm.cmd run pin:hash
-```
-
-Paste the generated `OWNER_PIN_HASH` into `.env`, set your `OWNER_EMAIL`, and set your database connection string if using Atlas. The PIN prompt hides input and requires at least 10 digits. `.env` is ignored by Git; never put these secrets in Vite variables or `shared/` files.
-
-```powershell
-# Only needed for the Docker database option:
-docker compose up -d mongodb
-
-# Starts React, Angular, the NestJS API and its TypeScript watcher:
 npm.cmd run dev:full
 ```
 
-Open **http://localhost:5173/react/** or **http://localhost:5173/angular/**. Use the exact origin configured in `PUBLIC_ORIGIN`; `localhost` and `127.0.0.1` are different origins. The development proxy forwards `/api` to port 3001. If you change `API_PORT`, update that proxy too.
+Before starting, put the generated hash in `OWNER_PIN_HASH` and set `MONGODB_URI`. The owner hash helper prompts privately and recommends a longer PIN by requiring at least 10 digits; an existing owner PIN/hash is preserved by this update. The recruiter UI requires 6 or more digits.
 
-With `MAIL_MODE=console`, verification codes and owner notification emails appear in the API terminal. No real emails are sent. This mode is disabled in production. Use a separate browser profile or private window for the recruiter while your normal browser is signed in as owner.
+Open http://localhost:5173/react/ or http://localhost:5173/angular/. Use the exact hostname in `PUBLIC_ORIGIN`: localhost and 127.0.0.1 differ. Use a private browser window for a recruiter and your normal browser for the owner. `npm run dev` still runs just the frontends; `dev:full` also compiles and watches NestJS.
 
-`npm run dev` continues to run the frontends alone. The contact email links remain available if the API is offline. `npm run dev:api` builds and runs just the API with Node's output watcher; rerun `npm run build:api` after source changes, or use `dev:full` for automatic TypeScript rebuilding.
+Local single-process mode uses direct SSE broadcasts and works with a standalone MongoDB server. Set `REALTIME_MODE=database` with Atlas or a replica set to exercise the same database change streams used on Vercel.
 
-## Real email delivery
+## Vercel deployment
 
-Set `MAIL_MODE=resend`, `RESEND_API_KEY`, and `MAIL_FROM` to an address on your verified Resend domain. Set `OWNER_EMAIL` to your destination inbox. Verification emails are delivered immediately. New messages are grouped by conversation and one-minute time window; notifications are processed after about 60–70 seconds, and messages already read by the owner are skipped. Notification failures retry with exponential backoff, capped at one hour. The pending notification is stored in the message document, so an API restart cannot lose it.
+Keep the existing Vercel project, repository, and automatic Git deployments. Use repository root `./`, framework preset **Other**, Node.js **22.x**, and the configuration committed in `vercel.json`:
 
-Email delivery is at-least-once: Resend idempotency keys suppress duplicate retries within its supported retention window, but delivery after a long outage can still duplicate a notification. Notifications contain a conversation link and contact email, not the message body. Recruiter reply-notification emails are not enabled; replies appear live or on the next visit.
+- Build command: `npm run build:full`.
+- Frontend output: `dist` (both /react/ and /angular/).
+- API entry: `api/index.js`, forwarding /api/* into NestJS.
+- Function maximum duration: 60 seconds. Streams intentionally end at 45 seconds and reconnect.
+- The Node function's `vercel-build` hook compiles the backend with TypeScript decorator metadata before packaging. The backend is not compiled with the frontend's TypeScript options.
 
-## Production deployment
+In **portfolio > Environment Variables**, add these for **Production**:
 
-The simplest deployment is **one persistent Node service** serving both built frontends and NestJS, with managed MongoDB. All source code remains in this repository.
+| Key              | Value                                                  | Type   |
+| ---------------- | ------------------------------------------------------ | ------ |
+| PUBLIC_ORIGIN    | https://portfolio-cliffrandycarcueva.vercel.app        | Config |
+| MONGODB_URI      | Your Atlas connection string                           | Secret |
+| MONGODB_DATABASE | portfolio                                              | Config |
+| OWNER_PIN_HASH   | The owner PIN hash from your local .env or hash helper | Secret |
+| NODE_ENV         | production                                             | Config |
 
-```powershell
-npm.cmd run build:full
-npm.cmd start
-```
+No OWNER_EMAIL, MAIL_MODE, MAIL_FROM, or RESEND_API_KEY is used. Remove any old mail settings from Vercel. API_PORT and API_HOST are only for running a standalone server, not Vercel Functions. Vercel's proxy is handled by the function adapter; do not copy a Docker-specific proxy setting.
 
-Set `NODE_ENV=production`, `API_HOST=0.0.0.0`, `API_PORT` to the port expected by your host, and `PUBLIC_ORIGIN` to your public HTTPS origin. Configure all database, owner, and email secrets in your host's environment. Production startup rejects missing required credentials or a non-HTTPS origin. TLS should terminate at your host's reverse proxy. Set `TRUST_PROXY_HOPS` to the exact number of trusted proxy hops (usually 1 for a single proxy); otherwise leave it at 0.
+Atlas must accept Vercel's outbound connections. The database user needs only readWrite on portfolio. The Hobby setup uses the configured IP access list plus the user's strong database password. Atlas provides the replica set needed for MongoDB change streams.
 
-The included `Dockerfile` builds both frontends and the API, then runs them on port 3001. Supply production secrets at runtime, not at image build time.
+After pushing the change and finishing the environment settings, deploy the latest commit. Open /api/health (expect status ok), then verify recruiter registration, returning email/PIN login, owner replies, unread counts, and session restoration. A successful static frontend deployment alone does not prove that the API is working: inspect the deployment's Functions/runtime logs if /api/health fails.
 
-The existing `vercel.json` still deploys only the static portfolio. It does **not** deploy this persistent NestJS service. To retain separate frontend hosting, you must route `/api/*` to the API through the same public origin, preserve streaming responses and cookies, and configure the proxy trust boundary. No cross-origin API access is enabled by default.
+Preview deployments need their own matching PUBLIC_ORIGIN and separate test database settings. Production-only variables intentionally do not configure previews.
 
-Run **one API instance** initially. Live event fan-out is process-local, and the email worker assumes a single instance. Multiple replicas require a shared event bus and distributed job claiming. This is intentionally a small service without Redis.
+### How live updates work
 
-## Transport and access controls
+The browser uses EventSource to keep an authenticated SSE request open. Sending and reading messages uses HTTP endpoints. On Vercel, each SSE request watches authorized MongoDB message changes, so a message written by another function instance still reaches its recipient. Each request closes its database cursor on disconnect or expiry. A 45-second connection lifetime keeps it below the configured function limit; reconnection fetches current history to cover any gap. There is also a 30-second recovery poll while the page is visible.
 
-- HTTP handles commands and paginated history. Authenticated server-sent events notify the browser of changes; the browser fetches the authorized conversation data. This is real-time server push, with a 30-second recovery poll while the page is visible.
-- Refresh, reconnect, framework switches, and offline periods recover history from MongoDB. Message request identifiers prevent duplicate inserts after a network retry.
-- Cookies are HttpOnly, SameSite=Strict, and Secure in production. State-changing requests require the configured Origin and JSON content type.
-- Session expiry is checked on access; MongoDB TTL indexes handle eventual cleanup. PIN checks and email verification are rate-limited using database-backed counters. PINs use scrypt; session tokens and verification codes are hashed at rest.
-- Every history, send, and read operation checks ownership. Recruiters cannot select someone else's conversation or assign themselves an owner role. A submitted email never unlocks history by itself.
-- The nickname step appears only after email verification, so the public flow does not reveal whether an email already has an account.
-- Messages are plain text, capped at 4,000 characters, and escaped by each frontend. There are no attachments, HTML rendering, typing indicators, or push notifications.
+This preserves server push; it is not a switch to five-second browser polling and does not require a WebSocket or paid real-time provider. Open streams still consume Vercel runtime resources and database connections. The MongoDB pool is capped at 10 connections per warm function instance. This is intended for low-volume portfolio traffic; monitor Vercel and Atlas usage before increasing traffic.
+
+## Identity and access
+
+PINs are salted scrypt hashes, never returned to browsers. PIN attempts are rate-limited by email and IP in MongoDB. Session tokens are random, stored hashed, and checked for expiry; cookies are HttpOnly, SameSite=Strict, and Secure in production. Each send/history/read operation checks conversation ownership. Messages are escaped plain text, capped at 4,000 characters, with unique retry identifiers preventing duplicate sends.
+
+An email is now a claimed identifier, not a verified address. Anyone can register an unused email, but an existing conversation requires its PIN or an already authenticated session. The email-first lookup deliberately reveals whether the email is registered, but returns no nickname, message history, or PIN data.
+
+There is no automated forgotten-PIN reset. An owner-assisted recovery process must verify identity separately; do not expose a public reset-by-email endpoint. This first version does not include an owner reset UI.
+
+### Existing email-code test accounts
+
+A recruiter with a still-valid session from the previous version is asked to choose their first PIN before continuing. The set-PIN endpoint requires that original session and cannot overwrite an existing PIN. Existing accounts without a session cannot be claimed merely by registering their email again. Preserve their data; use a new email for fresh local tests or arrange an identity-checked manual migration. Old verification challenge documents expire through their existing TTL index; legacy notification fields are unused and never send mail.
+
+## Other hosting
+
+`npm run build:full` followed by `npm start` serves both frontends and the API. Use NODE_ENV=production, HTTPS PUBLIC_ORIGIN, database credentials, and OWNER_PIN_HASH. Set API_HOST=0.0.0.0 in a container and configure API_PORT (or PORT) for the host. The Dockerfile remains supported.
+
+For multiple persistent API instances, enable REALTIME_MODE=database with Atlas or a replica set. Standalone MongoDB only supports the local single-process broadcast mode.
 
 ## Verification
 
 ```powershell
-npm.cmd run test:api
 npm.cmd run build:full
+npm.cmd run test:api
 $env:TEST_CHAT_BROWSER = '1'
 $env:PLAYWRIGHT_CHANNEL = 'chrome'
 npm.cmd run test:api
@@ -81,6 +90,6 @@ Remove-Item Env:TEST_CHAT_BROWSER
 npm.cmd test
 ```
 
-API tests use `mongodb-memory-server`, which downloads and starts a temporary MongoDB binary automatically. No installed database, Docker daemon, or Atlas credentials are needed for those tests. The first run requires network access. Data is discarded afterward.
+API tests start a temporary MongoDB replica set, a normal Nest server, and the actual Vercel handler in a second process. They check private events across instances, PIN authentication, collisions, rate limits, expiry, and safe migration of old accounts. No cloud database or email service is contacted. The first run downloads a temporary MongoDB binary if needed.
 
-With `TEST_CHAT_BROWSER=1`, the API suite also checks both built frontends against the real API using Chrome (or the channel selected by `PLAYWRIGHT_CHANNEL`), including recruiter onboarding, session restoration, owner replies, and mobile dock bounds. Build the frontends first. The ordinary Playwright suite still covers the rest of the portfolio.
+With TEST_CHAT_BROWSER=1, the suite also checks both built frontends against the API. The ordinary Playwright suite checks the rest of the portfolio. Local tests do not replace verifying the deployed Vercel build and live Atlas connection.

@@ -2,6 +2,7 @@ export interface Recruiter {
   _id: string;
   email: string;
   nickname: string;
+  needsPin?: boolean;
 }
 export interface Message {
   _id: string;
@@ -15,18 +16,17 @@ export interface Conversation extends Recruiter {
   unread: number;
   latest?: Message;
 }
-type Step = 'email' | 'code' | 'nickname' | 'owner' | 'chat';
+type Step = 'email' | 'login' | 'register' | 'set-pin' | 'owner' | 'chat';
 export interface ChatState {
   open: boolean;
   role: 'owner' | 'recruiter' | null;
   recruiter: Recruiter | null;
   step: Step;
   email: string;
-  code: string;
+  confirmPin: string;
   nickname: string;
   pin: string;
   draft: string;
-  challengeId: string;
   conversations: Conversation[];
   selected: string;
   messages: Message[];
@@ -41,11 +41,10 @@ const initial = (): ChatState => ({
   recruiter: null,
   step: 'email',
   email: '',
-  code: '',
+  confirmPin: '',
   nickname: '',
   pin: '',
   draft: '',
-  challengeId: '',
   conversations: [],
   selected: '',
   messages: [],
@@ -163,7 +162,8 @@ export class Messaging {
     this.patch({
       ...session,
       pin: '',
-      code: '',
+      confirmPin: '',
+      nickname: session.recruiter?.nickname ?? '',
       messages: [],
       conversations: [],
       selected:
@@ -171,7 +171,7 @@ export class Messaging {
           ? (new URLSearchParams(location.search).get('conversation') ??
             (this.state.role === 'owner' ? this.state.selected : ''))
           : (session.recruiter?._id ?? ''),
-      step: session.role === 'recruiter' && !session.recruiter?.nickname ? 'nickname' : 'chat',
+      step: session.role === 'recruiter' && session.recruiter?.needsPin ? 'set-pin' : 'chat',
     });
     this.stream = new EventSource('/api/events');
     this.stream.onopen = () => {
@@ -194,27 +194,40 @@ export class Messaging {
     if (this.state.role) void this.refresh();
   }
   close() {
-    this.patch({ open: false, pin: '', error: '' });
+    this.patch({ open: false, pin: '', confirmPin: '', error: '' });
   }
   async identify() {
     await this.action(async () => {
       const result = await this.api('auth/email', { email: this.state.email });
-      this.patch({ challengeId: result.challengeId, step: 'code', code: '' });
+      this.patch({
+        step: result.exists ? 'login' : 'register',
+        pin: '',
+        confirmPin: '',
+        nickname: '',
+      });
     });
   }
-  async verify() {
+  async login() {
     await this.action(async () => {
       await this.accept(
-        await this.api('auth/verify', {
-          challengeId: this.state.challengeId,
-          code: this.state.code,
+        await this.api('auth/login', {
+          email: this.state.email,
+          pin: this.state.pin,
         }),
       );
     });
   }
-  async nickname() {
+  async register() {
     await this.action(async () => {
-      await this.accept(await this.api('auth/nickname', { nickname: this.state.nickname }));
+      if (this.state.pin !== this.state.confirmPin) throw new Error('The PINs do not match.');
+      await this.accept(
+        await this.api(this.state.step === 'set-pin' ? 'auth/set-pin' : 'auth/register', {
+          email: this.state.email,
+          nickname: this.state.nickname,
+          pin: this.state.pin,
+          confirmPin: this.state.confirmPin,
+        }),
+      );
     });
   }
   async owner() {

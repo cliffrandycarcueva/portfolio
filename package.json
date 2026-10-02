@@ -21,7 +21,8 @@
     "start": "node apps/api/build/main.js",
     "build:full": "npm run build && npm run build:api",
     "pin:hash": "node scripts/hash-pin.mjs",
-    "test:api": "npm run build:api && node --test apps/api/test/*.test.mjs"
+    "test:api": "npm run build:api && node --test apps/api/test/*.test.mjs",
+    "vercel-build": "npm run build:api"
   },
   "dependencies": {
     "@angular/common": "^21.2.24",

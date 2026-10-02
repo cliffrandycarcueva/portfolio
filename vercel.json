@@ -1,7 +1,14 @@
 {
   "framework": null,
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build:full",
   "outputDirectory": "dist",
   "trailingSlash": true,
-  "redirects": [{ "source": "/", "destination": "/react/", "permanent": false }]
+  "redirects": [{ "source": "/", "destination": "/react/", "permanent": false }],
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 60,
+      "includeFiles": "apps/api/{build/**,package.json}"
+    }
+  },
+  "rewrites": [{ "source": "/api/:path*", "destination": "/api/index" }]
 }

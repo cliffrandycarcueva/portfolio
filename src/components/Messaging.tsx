@@ -1,14 +1,18 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { MessageCircle, Bell, X } from 'lucide-react';
-import { Messaging as ChatClient } from '../../shared/messaging';
+import { MessageCircle, X } from 'lucide-react';
+import { chat } from '../../shared/chat-client';
+import { anchorInbox } from '../../shared/inbox-popover';
 
 export function Messaging() {
-  const [chat] = useState(() => new ChatClient());
   const state = useSyncExternalStore(chat.subscribe, chat.snapshot);
   const dock = useRef<HTMLElement>(null);
   const launcher = useRef<HTMLButtonElement>(null);
   const log = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (state.open && state.role === 'owner' && dock.current)
+      return anchorInbox(dock.current, () => chat.close());
+  }, [state.open, state.role]);
   useEffect(() => {
     void chat.start();
     return () => chat.stop();
@@ -21,7 +25,8 @@ export function Messaging() {
   }, [state.messages.at(-1)?._id]);
   const close = () => {
     chat.close();
-    launcher.current?.focus();
+    if (state.role === 'owner') document.getElementById('owner-inbox-bell')?.focus();
+    else launcher.current?.focus();
   };
   const submit = (task: () => Promise<void>) => (event: React.FormEvent) => {
     event.preventDefault();
@@ -30,22 +35,24 @@ export function Messaging() {
   const current = state.conversations.find((item) => item._id === state.selected);
   return (
     <>
-      <button
-        ref={launcher}
-        className="chat-launch"
-        onClick={() => chat.open()}
-        aria-expanded={state.open}
-        aria-controls="messaging-dock"
-      >
-        {state.role === 'owner' ? <Bell size={18} /> : <MessageCircle size={18} />}
-        {state.role === 'owner' ? 'Message inbox' : 'Message me'}
-        {chat.unread > 0 && <span className="chat-badge">{chat.unread}</span>}
-      </button>
+      {state.role !== 'owner' && (
+        <button
+          ref={launcher}
+          className="chat-launch"
+          onClick={() => chat.open()}
+          aria-expanded={state.open}
+          aria-controls="messaging-dock"
+        >
+          <MessageCircle size={18} />
+          Message me
+          {chat.unread > 0 && <span className="chat-badge">{chat.unread}</span>}
+        </button>
+      )}
       {state.open &&
         createPortal(
           <aside
             id="messaging-dock"
-            className="chat-dock"
+            className={state.role === 'owner' ? 'chat-dock owner-inbox-popover' : 'chat-dock'}
             role="dialog"
             aria-label="Portfolio messages"
             tabIndex={-1}

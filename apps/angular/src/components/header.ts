@@ -10,6 +10,8 @@ import { navigation, profile } from '../../../../shared/data';
 import { ThemeService } from '../theme.service';
 import { Icon } from './icon';
 import { FrameworkSwitch } from './framework-switch';
+import { trackActiveSection } from '../../../../shared/active-section';
+import { chat } from '../../../../shared/chat-client';
 
 @Component({
   selector: 'portfolio-header',
@@ -18,6 +20,12 @@ import { FrameworkSwitch } from './framework-switch';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Header {
+  readonly chat = chat;
+  readonly messages = signal(chat.state);
+  openInbox() {
+    void this.chat.select('');
+    this.chat.open();
+  }
   readonly navigation = navigation;
   readonly profile = profile;
   readonly theme = inject(ThemeService);
@@ -25,18 +33,9 @@ export class Header {
 
   constructor() {
     const destroyRef = inject(DestroyRef);
+    destroyRef.onDestroy(chat.subscribe(() => this.messages.set(chat.state)));
     afterNextRender(() => {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) if (entry.isIntersecting) this.active.set(entry.target.id);
-        },
-        { rootMargin: '-15% 0px -60% 0px' },
-      );
-      navigation.forEach(({ id }) => {
-        const section = document.getElementById(id);
-        if (section) observer.observe(section);
-      });
-      destroyRef.onDestroy(() => observer.disconnect());
+      destroyRef.onDestroy(trackActiveSection((id) => this.active.set(id)));
     });
   }
 }

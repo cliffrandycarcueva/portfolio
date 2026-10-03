@@ -1,9 +1,12 @@
-import { Download, Moon, Sun } from 'lucide-react';
+import { Download, Moon, Sun, Bell } from 'lucide-react';
+import { useSyncExternalStore } from 'react';
+import { chat } from '../../shared/chat-client';
 import { navigation, profile } from '../data';
 import { useTheme } from '../hooks/useTheme';
 import { useActiveSection } from '../hooks/useActiveSection';
 import { FrameworkSwitch } from './FrameworkSwitch';
 export function Header() {
+  const messages = useSyncExternalStore(chat.subscribe, chat.snapshot);
   const { dark, toggleTheme } = useTheme();
   const active = useActiveSection();
   return (
@@ -46,6 +49,22 @@ export function Header() {
             <Download size={15} />
             <span>Resume</span>
           </a>
+          {messages.role === 'owner' && (
+            <button
+              id="owner-inbox-bell"
+              className="owner-inbox-bell"
+              aria-label={`Message inbox${chat.unread ? `, ${chat.unread} unread` : ''}`}
+              aria-expanded={messages.open}
+              aria-controls="messaging-dock"
+              onClick={() => {
+                void chat.select('');
+                chat.open();
+              }}
+            >
+              <Bell size={20} />
+              {chat.unread > 0 && <span className="chat-badge">{chat.unread}</span>}
+            </button>
+          )}
         </div>
       </div>
     </header>

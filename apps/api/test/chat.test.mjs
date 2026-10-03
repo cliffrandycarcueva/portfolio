@@ -382,6 +382,7 @@ test(
             const page = await context.newPage();
             page.setDefaultTimeout(12000);
             await page.goto(`${origin}/${framework}/`);
+            assert.equal(await page.locator('#owner-inbox-bell').count(), 0);
             await page.getByRole('button', { name: 'Message me', exact: true }).click();
             await page.getByLabel('Email', { exact: true }).fill(`${framework}@example.com`);
             await page.getByRole('button', { name: 'Continue', exact: true }).click();
@@ -415,6 +416,26 @@ test(
             await page.getByRole('button', { name: 'Owner sign in' }).click();
             await page.getByLabel('Owner PIN').fill(pin);
             await page.getByRole('button', { name: 'Open inbox', exact: true }).click();
+            await page.locator('#owner-inbox-bell').waitFor();
+            assert.equal(await page.locator('#contact .chat-launch').count(), 0);
+            await page.getByRole('button', { name: 'Close messages' }).click();
+            assert.equal(
+              await page
+                .locator('#owner-inbox-bell')
+                .evaluate((el) => el === document.activeElement),
+              true,
+            );
+            await page.reload();
+            await page.locator('#owner-inbox-bell').click();
+            const bellBox = await page.locator('#owner-inbox-bell').boundingBox();
+            const inboxBox = await page.getByRole('dialog').boundingBox();
+            assert.ok(
+              Math.abs(inboxBox.y - (bellBox.y + bellBox.height + 12)) < 2,
+              JSON.stringify({ framework, bellBox, inboxBox }),
+            );
+            await page.locator('.header .brand').click();
+            await page.getByRole('dialog').waitFor({ state: 'detached' });
+            await page.locator('#owner-inbox-bell').click();
             await page.getByRole('button', { name: new RegExp(`${framework} recruiter`) }).click();
             await page.getByLabel('Message', { exact: true }).fill(`Reply to ${framework}`);
             await page.getByRole('button', { name: 'Send', exact: true }).click();
@@ -423,6 +444,10 @@ test(
             await page.setViewportSize({ width: 390, height: 844 });
             const box = await page.getByRole('dialog').boundingBox();
             assert.ok(box.x >= 0 && box.x + box.width <= 390);
+            assert.ok(box.y >= 0 && box.y + box.height <= 844);
+            await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+            await page.locator('#owner-inbox-bell').waitFor({ state: 'detached' });
+            await page.getByRole('button', { name: 'Message me', exact: true }).waitFor();
             await page.screenshot({ path: `test-results/chat-${framework}.png`, fullPage: false });
             await recruiterContext.close();
             await context.close();

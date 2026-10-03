@@ -21,6 +21,20 @@
   min-width: 32px;
   min-height: 32px;
 }
+.owner-inbox-bell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  color: var(--accent);
+}
+.owner-inbox-bell .chat-badge {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+}
 .chat-badge {
   display: inline-block;
   min-width: 20px;
@@ -53,6 +67,34 @@
 .chat-dock button:disabled {
   opacity: 0.55;
   cursor: wait;
+}
+.chat-dock.owner-inbox-popover {
+  top: var(--inbox-top, 80px);
+  left: var(--inbox-left, 12px);
+  right: auto;
+  bottom: auto;
+  width: min(380px, calc(100vw - 24px));
+  max-height: min(660px, calc(100dvh - var(--inbox-top, 80px) - 12px));
+  overflow: visible;
+}
+.owner-inbox-popover::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: calc(var(--inbox-pointer, 350px) - 7px);
+  width: 12px;
+  height: 12px;
+  background: var(--soft);
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  transform: rotate(45deg);
+}
+.owner-inbox-popover > .chat-header {
+  border-radius: 16px 16px 0 0;
+  flex-shrink: 0;
+}
+.owner-inbox-popover > :last-child {
+  border-radius: 0 0 16px 16px;
 }
 .chat-header {
   display: flex;
@@ -390,7 +432,7 @@
     @apply text-ink;
   }
   nav a.active:after {
-    @apply absolute bottom-[17px] left-1/2 h-1 w-1 rounded-full bg-leaf [content:''];
+    @apply absolute bottom-[17px] left-0 h-0.5 w-full rounded-full bg-leaf [content:''];
   }
   h1 {
     @apply mx-0 mt-[21px] mb-[23px] text-[70px] leading-[1.09] font-[750] tracking-[-3.8px];

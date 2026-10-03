@@ -1,5 +1,31 @@
 import { test, expect } from '@playwright/test';
 
+test('navigation follows Contact, direct links, and scrolling back to About', async ({ page }) => {
+  await page.goto('./');
+  const nav = page.getByRole('navigation', { name: 'Main navigation' });
+  const contact = nav.getByRole('link', { name: 'contact', exact: true });
+  await contact.click();
+  await expect(contact).toHaveAttribute('aria-current', 'location');
+  await expect(nav.locator('[aria-current]')).toHaveCount(1);
+  const underline = await contact.evaluate((link) => {
+    const style = getComputedStyle(link, '::after');
+    return { width: parseFloat(style.width), height: parseFloat(style.height) };
+  });
+  expect(underline.width).toBeGreaterThan(underline.height * 5);
+  await page.reload();
+  await expect(contact).toHaveAttribute('aria-current', 'location');
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await expect(nav.getByRole('link', { name: 'about', exact: true })).toHaveAttribute(
+    'aria-current',
+    'location',
+  );
+  await page.goto('./#skills');
+  await expect(nav.getByRole('link', { name: 'skills', exact: true })).toHaveAttribute(
+    'aria-current',
+    'location',
+  );
+});
+
 test('framework switch preserves theme and section through navigation and reload', async ({
   page,
 }, testInfo) => {

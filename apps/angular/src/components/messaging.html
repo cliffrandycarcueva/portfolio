@@ -1,24 +1,24 @@
-<button
-  #launcher
-  class="chat-launch"
-  (click)="chat.open()"
-  [attr.aria-expanded]="state().open"
-  aria-controls="messaging-dock"
->
-  <portfolio-icon
-    [name]="state().role === 'owner' ? 'Bell' : 'MessageCircle'"
-    [size]="18"
-  ></portfolio-icon>
-  {{ state().role === 'owner' ? 'Message inbox' : 'Message me' }}
-  @if (chat.unread > 0) {
-    <span class="chat-badge">{{ chat.unread }}</span>
-  }
-</button>
+@if (state().role !== 'owner') {
+  <button
+    #launcher
+    class="chat-launch"
+    (click)="chat.open()"
+    [attr.aria-expanded]="state().open"
+    aria-controls="messaging-dock"
+  >
+    <portfolio-icon name="MessageCircle" [size]="18"></portfolio-icon>
+    Message me
+    @if (chat.unread > 0) {
+      <span class="chat-badge">{{ chat.unread }}</span>
+    }
+  </button>
+}
 @if (state().open) {
   <aside
     #dock
     id="messaging-dock"
     class="chat-dock"
+    [class.owner-inbox-popover]="state().role === 'owner'"
     role="dialog"
     aria-label="Portfolio messages"
     tabindex="-1"

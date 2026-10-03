@@ -36,6 +36,21 @@
         class="resume-link flex items-center gap-2 rounded-md border border-line bg-surface px-3.5 py-2.5 text-[12px] font-semibold max-mobile:border-0 max-mobile:bg-transparent max-mobile:p-2"
         ><portfolio-icon name="Download" [size]="15"></portfolio-icon><span>Resume</span></a
       >
+      @if (messages().role === 'owner') {
+        <button
+          id="owner-inbox-bell"
+          class="owner-inbox-bell"
+          [attr.aria-label]="'Message inbox' + (chat.unread ? ', ' + chat.unread + ' unread' : '')"
+          [attr.aria-expanded]="messages().open"
+          aria-controls="messaging-dock"
+          (click)="openInbox()"
+        >
+          <portfolio-icon name="Bell" [size]="20"></portfolio-icon>
+          @if (chat.unread > 0) {
+            <span class="chat-badge">{{ chat.unread }}</span>
+          }
+        </button>
+      }
     </div>
   </div>
 </header>

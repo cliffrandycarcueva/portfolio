@@ -2,8 +2,11 @@
   "framework": null,
   "buildCommand": "npm run build:full",
   "outputDirectory": "dist",
-  "trailingSlash": true,
-  "redirects": [{ "source": "/", "destination": "/react/", "permanent": false }],
+  "redirects": [
+    { "source": "/", "destination": "/react/", "permanent": false },
+    { "source": "/react", "destination": "/react/", "permanent": false },
+    { "source": "/angular", "destination": "/angular/", "permanent": false }
+  ],
   "functions": {
     "api/index.js": {
       "maxDuration": 60,
